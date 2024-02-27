@@ -18,6 +18,10 @@ class ScriptsHelper
     private string $wordpressPath;
     private string $envFilePath;
 
+    private const wordpressVersion = '6.4.2';
+
+    private const graphqlPluginVersion = "0.4.1";
+
     public function __construct($wordpressPath, $envFilePath)
     {
         $this->wordpressPath = $wordpressPath;
@@ -37,12 +41,11 @@ class ScriptsHelper
         }
     }
 
-    private function wordpressDirExists(): bool
-    {
+    private function wordpressDirExists(): bool {
         return file_exists($this->wordpressPath);
     }
 
-    private function removeFile($path) {
+    private function removeFile($path): void {
         if(file_exists($path)) {
             unlink($path);
         }
@@ -51,8 +54,7 @@ class ScriptsHelper
     /**
      * @throws Exception
      */
-    private function removeDir($dir): void
-    {
+    private function removeDir($dir): void {
         if (file_exists($dir)) {
             $it = new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS);
             $files = new RecursiveIteratorIterator($it,
@@ -74,17 +76,14 @@ class ScriptsHelper
     /**
      * @throws Exception
      */
-    private function executeCoreDownload(): void
-    {
-        $wordpressVersion = '6.4.2';
-        exec('php ' . __DIR__ . '/resources/wp-cli.phar core download --version=' . escapeshellarg($wordpressVersion) . ' --path=' . $this->wordpressPath);
+    private function executeCoreDownload(): void {
+        exec('php ' . __DIR__ . '/resources/wp-cli.phar core download --version=' . escapeshellarg(self::wordpressVersion) . ' --path=' . $this->wordpressPath);
         if (!$this->wordpressDirExists()) {
             throw new Exception("The wordpress core was not downloaded successfully");
         }
     }
 
-    private function readEnvFile(): array
-    {
+    private function readEnvFile(): array {
         $envData = [];
         if (file_exists($this->envFilePath)) {
             $lines = file($this->envFilePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
@@ -96,35 +95,40 @@ class ScriptsHelper
         return $envData;
     }
 
-    private function executeCreateWpConfig(): void
-    {
+    private function executeCreateWpConfig(): void {
         $envData = $this->readEnvFile();
         exec('php ' . __DIR__ . '/resources/wp-cli.phar config create --dbname=' . escapeshellarg($envData["DB_NAME"]) . ' --dbuser=' . escapeshellarg($envData["DB_USER"]) . ' --dbpass=' . escapeshellarg($envData["DB_PASS"]) . ' --dbhost=localhost --path=' . $this->wordpressPath);
     }
 
-    private function executeWpCoreInstall($domainName, $projectName): void
-    {
-        $adminPassword = "password";
-        $adminEmail = 'test@zilch.nl';
-        exec('php ' . __DIR__ . '/resources/wp-cli.phar core install --url=' . escapeshellarg($domainName) . ' --title=' . escapeshellarg($projectName) . ' --admin_user=admin --admin_password=' . escapeshellarg($adminPassword) . ' --admin_email=' . escapeshellarg($adminEmail) . ' --path=' . $this->wordpressPath);
+    private function executeWpCoreInstall($domainName, $projectName): void {
+        $adminPassword = `uuidgen`;
+        $randomString = `uuidgen`;
+        $adminEmail = "$randomString@zilch.nl";
+        exec('php ' . __DIR__ . '/resources/wp-cli.phar core install --url=' . escapeshellarg($domainName) . ' --title=' . escapeshellarg($projectName) . ' --admin_user=zilch-admin --admin_password=' . escapeshellarg($adminPassword) . ' --admin_email=' . escapeshellarg($adminEmail) . ' --path=' . $this->wordpressPath);
     }
 
-    private function executeWpLanguageCommands(): void
-    {
-        exec('php ' . __DIR__ . '/resources/wp-cli.phar --path=' . escapeshellarg($this->wordpressPath) . ' language core install nl_NL');
-        exec('php ' . __DIR__ . '/resources/wp-cli.phar --path=' . escapeshellarg($this->wordpressPath) . ' language core update');
+    /**
+     * @throws Exception
+     */
+    private function executeWpLanguageCommands(): void {
+        try {
+            if(!exec('php ' . __DIR__ . '/resources/wp-cli.phar --path=' . escapeshellarg($this->wordpressPath) . ' language core install nl_NL')) {
+                throw new Exception("Error executing language core install");
+            }
+            exec('php ' . __DIR__ . '/resources/wp-cli.phar --path=' . escapeshellarg($this->wordpressPath) . ' language core update');
+        } catch (\Throwable $t) {
+            throw new Exception("Something went wrong while installing and updating the language", 500, $t->getMessage());
+        }
     }
 
-    private function installPlugin($plugin): void
-    {
+    private function installPlugin($plugin): void {
         exec('php ' . __DIR__ . '/resources/wp-cli.phar plugin install ' . escapeshellarg($plugin) . ' --activate --path=' . escapeshellarg($this->wordpressPath));
     }
 
     /**
      * @throws Exception
      */
-    private function validatePluginIsInstalled(string $pluginName): void
-    {
+    private function validatePluginIsInstalled(string $pluginName): void {
         $searchPattern = "$this->wordpressPath/wp-content/plugins/*{$pluginName}*";
         $matchingDirectories = glob($searchPattern, GLOB_ONLYDIR);
         if (empty($matchingDirectories)) {
@@ -135,11 +139,11 @@ class ScriptsHelper
     /**
      * @throws Exception
      */
-    private function installPlugins(): void
-    {
+    private function installPlugins(): void {
+        $wpGraphQlGutenbergVersion = self::graphqlPluginVersion;
         $plugins = [
             'wp-graphql' => 'wp-graphql',
-            'wp-graphql-gutenberg' => 'https://github.com/pristas-peter/wp-graphql-gutenberg/archive/refs/tags/v0.4.1.zip',
+            'wp-graphql-gutenberg' => "https://github.com/pristas-peter/wp-graphql-gutenberg/archive/refs/tags/v$wpGraphQlGutenbergVersion.zip",
             'contact-form-7' => 'contact-form-7',
             'zilch-assistant-plugin' => 'https://gitlab.xel.nl/albert/kameleon-assistant-plugin-zip/-/raw/latest/zilch-assistant-plugin.zip'
         ];
@@ -149,9 +153,21 @@ class ScriptsHelper
         }
     }
 
-    private function generateHtaccessFile($domainName): void
-    {
-        $htaccessContent = <<<EOD
+    private function shouldCreateHtaccessFile($htaccessPath): bool {
+        if(file_exists($htaccessPath)) {
+            $content = file_get_contents($htaccessPath);
+            if (str_contains($content, "/wp-admin to /cms/wp-admin")
+                || str_contains($content, "/cms to /cms/wp-admin")) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private function generateHtaccessFile($domainName): void {
+        $htaccessPath = __DIR__ . '/.htaccess';
+        if($this->shouldCreateHtaccessFile($htaccessPath)) {
+            $htaccessContent = <<<EOD
     <IfModule mod_rewrite.c>
         RewriteEngine On
         RewriteBase /
@@ -163,11 +179,11 @@ class ScriptsHelper
         RewriteRule ^cms/?$ https://$domainName/cms/wp-admin [R=301,L]
     </IfModule>
     EOD;
-        file_put_contents($this->wordpressPath . '/.htaccess', $htaccessContent);
+            file_put_contents(__DIR__ . '/.htaccess', $htaccessContent);
+        }
     }
 
-    private function generateResponse($error = null): void
-    {
+    private function generateResponse($error = null): void {
         $data = ["responseCode" => 200];
         if ($error) {
             $data = [
@@ -179,9 +195,9 @@ class ScriptsHelper
         echo json_encode($data) . "\n";
     }
 
-    public function installWpScripts($domainName, $projectName): void
-    {
+    public function installWpScripts($domainName, $projectName): void {
         try {
+            $this->generateHtaccessFile($domainName);
             $this->removeDir($this->wordpressPath);
             $this->downloadPharFile();
             $this->executeCoreDownload();
@@ -189,8 +205,6 @@ class ScriptsHelper
             $this->executeWpCoreInstall($domainName, $projectName);
             $this->executeWpLanguageCommands();
             $this->installPlugins();
-            $this->generateHtaccessFile($domainName);
-
             $this->generateResponse();
         } catch (Exception $e) {
             $this->removeDir($this->wordpressPath);
@@ -198,6 +212,7 @@ class ScriptsHelper
             $this->removeDir(__DIR__."/resources");
             $this->generateResponse($e);
             unlink(__FILE__);
+            exit($e->getCode());
         }
     }
 }
