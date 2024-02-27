@@ -42,12 +42,17 @@ class ScriptsHelper
         return file_exists($this->wordpressPath);
     }
 
+    private function removeFile($path) {
+        if(file_exists($path)) {
+            unlink($path);
+        }
+    }
+
     /**
      * @throws Exception
      */
-    private function removeCmsDir(): void
+    private function removeDir($dir): void
     {
-        $dir = $this->wordpressPath;
         if (file_exists($dir)) {
             $it = new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS);
             $files = new RecursiveIteratorIterator($it,
@@ -177,7 +182,7 @@ class ScriptsHelper
     public function installWpScripts($domainName, $projectName): void
     {
         try {
-            $this->removeCmsDir();
+            $this->removeDir($this->wordpressPath);
             $this->downloadPharFile();
             $this->executeCoreDownload();
             $this->executeCreateWpConfig();
@@ -188,9 +193,11 @@ class ScriptsHelper
 
             $this->generateResponse();
         } catch (Exception $e) {
-            $this->removeCmsDir();
+            $this->removeDir($this->wordpressPath);
+            $this->removeFile($this->envFilePath);
+            $this->removeDir(__DIR__."/resources");
             $this->generateResponse($e);
+            unlink(__FILE__);
         }
     }
 }
-
