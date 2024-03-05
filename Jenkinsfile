@@ -4,7 +4,6 @@ pipeline {
         stage('Setup') {
             steps {
                 checkout scm
-                getJsonVersion()
                 slackSendMessage("START")
                 sh """chmod +x tests/ta/ta.sh && ./tests/ta/ta.sh"""
 
