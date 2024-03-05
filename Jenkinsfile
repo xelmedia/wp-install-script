@@ -3,10 +3,11 @@ pipeline {
     stages {
         stage('Setup') {
             steps {
-                checkout scm
-                slackSendMessage("START")
-                sh """chmod +x tests/ta/ta.sh && ./tests/ta/ta.sh"""
-
+                script {
+                    checkout scm
+                    slackSendMessage("START")
+                    sh """chmod +x tests/ta/ta.sh && ./tests/ta/ta.sh"""
+                }
             }
         }
         stage('Create release tag') {
