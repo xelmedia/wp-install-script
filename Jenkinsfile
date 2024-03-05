@@ -2,8 +2,8 @@ pipeline {
     agent { label 'docker-in-docker' }
     stages {
         stage('TA') {
+            when { anyOf { branch 'master'; changeRequest() } }
             steps {
-                when { anyOf { branch 'master'; changeRequest() } }
                 script {
                     checkout scm
                     slackSendMessage("#4287f5","START")
