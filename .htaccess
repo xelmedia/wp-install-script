@@ -1,0 +1,20 @@
+RewriteEngine On
+RewriteBase /
+
+# Rewrite all php requests to /cms
+RewriteCond %{REQUEST_URI} !^/cms/
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.+\.php)$ /cms/$1 [L]
+
+# Rewrite query params to /cms (mostly used by WordPress and the REST_API)
+RewriteCond %{REQUEST_RUI} !^/cms
+RewriteCond %{QUERY_STRING} .
+RewriteRule ^$ /cms/ [QSA,L]
+
+# Rewrite ^wp-* requests to /cms
+RewriteRule ^wp-(.*)$ /cms/wp-$1 [L]
+
+# Rewrite all other rules to /public_html
+RewriteCond %{ENV:REDIRECT_STATUS} ^$
+RewriteRule (.*) /public_html/$1 [L]
