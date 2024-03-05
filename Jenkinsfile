@@ -1,11 +1,12 @@
 pipeline {
     agent { label 'docker-in-docker' }
     stages {
-        stage('Setup') {
+        stage('TA') {
             steps {
+                when { anyOf { branch 'master'; changeRequest() } }
                 script {
                     checkout scm
-                    slackSendMessage("START")
+                    slackSendMessage("#4287f5","START")
                     sh """chmod +x tests/ta/ta.sh && ./tests/ta/ta.sh"""
                 }
             }
