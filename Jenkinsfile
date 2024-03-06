@@ -6,7 +6,11 @@ pipeline {
             steps {
                 script {
                     checkout scm
-                    slackSendMessage("#4287f5","START")
+                    slackSend (
+                            channel: "#jenkinsbuilds",
+                            color: '#4287f5',
+                            message: """*Started:* - Job ${env.JOB_NAME} build ${env.BUILD_NUMBER} \n More info at: <${env.BUILD_URL} | *Here* >"""
+                    )
                     sh """chmod +x tests/ta/ta.sh && cd tests/ta && ./ta.sh"""
                 }
             }
