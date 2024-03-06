@@ -7,7 +7,7 @@ pipeline {
                 script {
                     checkout scm
                     slackSendMessage("#4287f5","START")
-                    sh """chmod +x tests/ta/ta.sh && ./tests/ta/ta.sh"""
+                    sh """chmod +x tests/ta/ta.sh && cd tests/ta && ./ta.sh"""
                 }
             }
         }
