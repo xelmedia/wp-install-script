@@ -14,10 +14,10 @@ echo "$scriptContent" | node_modules/.bin/wp-env run tests-cli tee /var/www/html
 echo "$htaccessContent" | node_modules/.bin/wp-env run tests-cli tee /var/www/html/.htaccess > /dev/null
 
 # Get db config from the docker container using theses commands
-db_name=$(wp-env run tests-cli wp config get DB_NAME)
-db_user=$(wp-env run tests-cli wp config get DB_USER)
-db_password=$(wp-env run tests-cli wp config get DB_PASSWORD)
-db_host=$(wp-env run tests-cli wp config get DB_HOST)
+db_name=$(node_modules/.bin/wp-env run tests-cli wp config get DB_NAME)
+db_user=$(node_modules/.bin/wp-env run tests-cli wp config get DB_USER)
+db_password=$(node_modules/.bin/wp-env run tests-cli wp config get DB_PASSWORD)
+db_host=$(node_modules/.bin/wp-env run tests-cli wp config get DB_HOST)
 
 # Create a .db.env file and copy the vars to there
 echo "DB_NAME=$db_name" > .db.env
