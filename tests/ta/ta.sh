@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-yarn global add @wordpress/scripts @wordpress/env copy-webpack-plugin
+yarn add @wordpress/scripts @wordpress/env copy-webpack-plugin
 node_modules/.bin/wp-env stop && node_modules/.bin/wp-env start &&
 ## Copy script from root dir to the test dir
 cp ../../WPInstallScript.php ./
