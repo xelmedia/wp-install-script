@@ -24,7 +24,7 @@ echo "DB_HOST=$db_host" >> .db.env
 cat .db.env | node_modules/.bin/wp-env run tests-cli tee /var/www/html/.db.env > /dev/null
 
 cleanupContent=$(<./cleanup.sh)
-echo "$cleanupContent" | wp-env run tests-cli tee /var/www/html/cleanup.sh > /dev/null
+echo "$cleanupContent" | node_modules/.bin/wp-env run tests-cli tee /var/www/html/cleanup.sh > /dev/null
 node_modules/.bin/wp-env run tests-cli chmod +x cleanup.sh
 node_modules/.bin/wp-env run tests-cli ./cleanup.sh
 node_modules/.bin/wp-env run tests-cli php WPInstallScript.php -p p -d d
