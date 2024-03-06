@@ -5,8 +5,6 @@ node_modules/.bin/wp-env stop && node_modules/.bin/wp-env start &&
 # get the php script content & htaccess file
 scriptContent=$(<../../WPInstallScript.php)
 htaccessContent=$(<../../.htaccess)
-echo "$scriptContent"
-echo "$htaccessContent"
 # Use wp-env run tests-cli to execute a command inside the container to copy the content to another file
 echo "$scriptContent" | node_modules/.bin/wp-env run tests-cli tee /var/www/html/WPInstallScript.php > /dev/null
 echo "$htaccessContent" | node_modules/.bin/wp-env run tests-cli tee /var/www/html/.htaccess > /dev/null
