@@ -35,17 +35,14 @@ class WPInstallScriptTest {
         }
     }
     private function testWPInstallation(): void {
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, 'http://localhost:8889/wp-login.php');
-        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1312.52 Safari/537.17');
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        $result = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-
-        if (!$httpCode == 200 || !strpos($result, '<form name="loginform"') !== false) {
-            throw new Exception("The curl output was not successful or it does not contain a login form as expected");
+        $loginPage = file_get_contents('http://localhost:8889/wp-login.php');
+        if ($loginPage === false) {
+            throw new Exception("Failed to retrieve login page");
         }
-        curl_close($ch);
+
+        if (strpos($loginPage, '<form name="loginform"') === false) {
+            throw new Exception("The login page does not contain the expected form");
+        }
     }
 
     public function executeWpInstallScriptsTests() {
