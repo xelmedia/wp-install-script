@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 class WPInstallScriptTest {
     private function testInstalledPlugins(): void {
-        $plugins = exec("wp-env run tests-cli wp plugin list --format=json --path=/var/www/html/cms");
+        $plugins = exec("node_modules/.bin/wp-env run tests-cli wp plugin list --format=json --path=/var/www/html/cms");
         $plugins = json_decode($plugins);
         $expectedPlugins = [
             'wp-graphql-gutenberg',
@@ -29,7 +29,7 @@ class WPInstallScriptTest {
     }
 
     private function testWPLanguageInstalled(): void {
-        $languages = exec("wp-env run tests-cli wp core language list --status=installed --path=/var/www/html/cms");
+        $languages = exec("node_modules/.bin/wp-env run tests-cli wp core language list --status=installed --path=/var/www/html/cms");
         if(!str_contains($languages, "nl_NL")) {
             throw new Exception("Nederlands is not installed as a core language");
         }
