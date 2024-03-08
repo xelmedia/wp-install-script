@@ -40,7 +40,7 @@ pipeline {
     post {
         success{
             script {
-                if (env.BRANCH_NAME == 'master') {
+                if (env.BRANCH_NAME == 'dev') {
                     slackSendMessage("#2aad72","*${currentBuild.currentResult}:* - *Job* ${env.JOB_NAME} build ${env.BUILD_NUMBER} \n *Duration*: ${currentBuild.durationString.minus(' and counting')} \n Release tag version: *${VERSION_NUMBER}* \n More info at: <${env.BUILD_URL} | *Here* >")
                 } else {
                     slackSendMessage("#2aad72","*${currentBuild.currentResult}:* - *Job* ${env.JOB_NAME} build ${env.BUILD_NUMBER} \n *Duration*: ${currentBuild.durationString.minus(' and counting')} \n More info at: <${env.BUILD_URL} | *Here* >")
