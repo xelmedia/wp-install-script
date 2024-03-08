@@ -23,7 +23,7 @@ pipeline {
                     getRepoURL()
                     getVersion()
                     getCommitEmail()
-                    version = "${VERSION_NUMBER}"-rc 
+                    version = "${VERSION_NUMBER}-rc "
                     echo "${version}"
                     // Push tag!
                     withCredentials([string(credentialsId: 'GITLAB_OAUTH_TOKEN', variable: 'OAUTH_API')]) {
