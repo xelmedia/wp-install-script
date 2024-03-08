@@ -7,13 +7,11 @@ class ScriptHelper {
     private string $runlevel;
 
     private const wordpressVersion = '6.4.2';
-
     private const graphqlGutenbergPluginVersion = "0.4.1";
-
     private const graphqlPluginVersion = "1.22.0";
-
     private const contactForm7Version = "5.9";
-
+    private const pharFileDirectory = __DIR__ . "/WPResources";
+    private const pharFilePath = self::pharFileDirectory . "/WPResources";
 
     public function __construct($wordpressPath, $envFilePath, $runlevel)
     {
@@ -31,14 +29,12 @@ class ScriptHelper {
     {
         try {
             $downloadUrl = "https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar";
-            $directory = __DIR__ . "/WPResources";
             // If directory doesnt exists, create one!
-            if (!file_exists($directory)) {
-                mkdir($directory, 0777, true);
+            if (!file_exists(self::pharFileDirectory)) {
+                mkdir(self::pharFileDirectory, 0777, true);
             }
-            $filePath = $directory . "/wp-cli.phar";
-            if (file_put_contents($filePath, file_get_contents($downloadUrl)) !== false) {
-                chmod($filePath, 0755);
+            if (file_put_contents(self::pharFilePath, file_get_contents($downloadUrl)) !== false) {
+                chmod(self::pharFilePath, 0755);
             }
         } catch (Error|Exception|Throwable $e) {
             throw new Exception("Something went wrong while downloading wp phar file", 500, $e->getMessage());
@@ -93,7 +89,7 @@ class ScriptHelper {
      * @throws Exception
      */
     private function executeCoreDownload(): void {
-        if (!exec('php ' . __DIR__ . '/WPResources/wp-cli.phar core download --version=' . escapeshellarg(self::wordpressVersion) . ' --path=' . $this->wordpressPath)) {
+        if (!exec('php ' . self::pharFilePath . ' core download --version=' . escapeshellarg(self::wordpressVersion) . ' --path=' . $this->wordpressPath)) {
             throw new Exception("The wordpress core was not downloaded successfully", 500);
         }
         if (!$this->wordpressDirExists()) {
@@ -124,7 +120,7 @@ class ScriptHelper {
      */
     private function executeCreateWpConfig(): void {
         $envData = $this->readEnvFile();
-        if(!exec('php ' . __DIR__ . '/WPResources/wp-cli.phar config create --dbname=' . escapeshellarg($envData["DB_NAME"]) . ' --dbuser=' . escapeshellarg($envData["DB_USER"]) . ' --dbpass=' . escapeshellarg($envData["DB_PASS"]) . ' --dbhost='. escapeshellarg($envData["DB_HOST"] ?? "localhost") .' --path=' . $this->wordpressPath)) {
+        if(!exec('php ' .self::pharFilePath .' config create --dbname=' . escapeshellarg($envData["DB_NAME"]) . ' --dbuser=' . escapeshellarg($envData["DB_USER"]) . ' --dbpass=' . escapeshellarg($envData["DB_PASS"]) . ' --dbhost='. escapeshellarg($envData["DB_HOST"] ?? "localhost") .' --path=' . $this->wordpressPath)) {
             throw new Exception("Something went wrong while creating wordpress database config", 500);
         }
     }
@@ -139,7 +135,7 @@ class ScriptHelper {
      */
     private function executeWpCoreInstall($domainName, $projectName): void {
         $adminEmail = "email@zilch.nl";
-        if(!exec('php ' . __DIR__ . '/WPResources/wp-cli.phar core install --url=' . escapeshellarg($domainName) . ' --title=' . escapeshellarg($projectName) . ' --admin_user=zilch-admin ' . '--admin_email=' . escapeshellarg($adminEmail) . ' --path=' . $this->wordpressPath)) {
+        if(!exec('php ' . self::pharFilePath . ' core install --url=' . escapeshellarg($domainName) . ' --title=' . escapeshellarg($projectName) . ' --admin_user=zilch-admin ' . '--admin_email=' . escapeshellarg($adminEmail) . ' --path=' . $this->wordpressPath)) {
             throw new Exception("Something went wrong while installing wordpress core for the given domain name: $domainName", 500);
         }
     }
@@ -150,7 +146,7 @@ class ScriptHelper {
      */
     private function executeWpLanguageCommands(): void {
         try {
-            if(!exec('php ' . __DIR__ . '/WPResources/wp-cli.phar --path=' . escapeshellarg($this->wordpressPath) . ' language core install nl_NL --activate')) {
+            if(!exec('php ' . self::pharFilePath . ' --path=' . escapeshellarg($this->wordpressPath) . ' language core install nl_NL --activate')) {
                 throw new Exception("Error executing language core install", 500);
             }
         } catch (\Throwable|Exception|Error $t) {
@@ -164,7 +160,7 @@ class ScriptHelper {
      * @throws Exception
      */
     private function installPlugin(String $plugin): void {
-        if(!exec('php ' . __DIR__ . '/WPResources/wp-cli.phar plugin install ' . escapeshellarg($plugin) . ' --activate --path=' . escapeshellarg($this->wordpressPath))) {
+        if(!exec('php ' . self::pharFilePath . ' plugin install ' . escapeshellarg($plugin) . ' --activate --path=' . escapeshellarg($this->wordpressPath))) {
             throw new Exception("Something went wrong while installing the plugin: $plugin", 500);
         }
     }
@@ -189,13 +185,10 @@ class ScriptHelper {
      * @throws Exception
      */
     private function installPlugins(): void {
-        $wpGraphQlGutenbergVersion = self::graphqlGutenbergPluginVersion;
-        $wpGraphQLVersion = self::graphqlPluginVersion;
-        $contactForm7Version = self::contactForm7Version;
         $plugins = [
-            'wp-graphql' => "https://downloads.wordpress.org/plugin/wp-graphql.$wpGraphQLVersion.zip",
-            'wp-graphql-gutenberg' => "https://github.com/pristas-peter/wp-graphql-gutenberg/archive/refs/tags/v$wpGraphQlGutenbergVersion.zip",
-            'contact-form-7' => "https://downloads.wordpress.org/plugin/contact-form-7.$contactForm7Version.zip",
+            'wp-graphql' => "https://downloads.wordpress.org/plugin/wp-graphql.". self::graphqlPluginVersion .".zip",
+            'wp-graphql-gutenberg' => "https://github.com/pristas-peter/wp-graphql-gutenberg/archive/refs/tags/v".self::graphqlGutenbergPluginVersion.".zip",
+            'contact-form-7' => "https://downloads.wordpress.org/plugin/contact-form-7.". self::contactForm7Version .".zip",
             'zilch-assistant-plugin' => 'https://gitlab.xel.nl/albert/kameleon-assistant-plugin-zip/-/raw/latest/zilch-assistant-plugin.zip'
         ];
         foreach ($plugins as $pluginName => $pluginSlug) {
