@@ -3,10 +3,10 @@ yarn add @wordpress/scripts @wordpress/env copy-webpack-plugin
 node_modules/.bin/wp-env stop || :
 node_modules/.bin/wp-env start --update &&
 # get the php script content & htaccess file
-scriptContent=$(<../../WPInstallScript.php)
+scriptContent=$(<../../zilch-wordpress-install-script.php)
 htaccessContent=$(<../../.htaccess)
 # Use wp-env run tests-cli to execute a command inside the container to copy the content to another file
-echo "$scriptContent" | node_modules/.bin/wp-env run tests-cli tee /var/www/html/WPInstallScript.php > /dev/null
+echo "$scriptContent" | node_modules/.bin/wp-env run tests-cli tee /var/www/html/zilch-wordpress-install-script.php > /dev/null
 echo "$htaccessContent" | node_modules/.bin/wp-env run tests-cli tee /var/www/html/.htaccess > /dev/null
 
 # Get db config from the docker container using theses commands
@@ -27,5 +27,5 @@ cleanupContent=$(<./cleanup.sh)
 echo "$cleanupContent" | node_modules/.bin/wp-env run tests-cli tee /var/www/html/cleanup.sh > /dev/null
 node_modules/.bin/wp-env run tests-cli chmod +x cleanup.sh
 node_modules/.bin/wp-env run tests-cli ./cleanup.sh
-node_modules/.bin/wp-env run tests-cli php WPInstallScript.php -p p -d d
-php test.php
+node_modules/.bin/wp-env run tests-cli php zilch-wordpress-install-script.php -p p -d d
+php test-zilch-wordpress-install-script.php
