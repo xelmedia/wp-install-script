@@ -2,7 +2,7 @@ pipeline {
     agent { label 'docker-in-docker' }
     stages {
         stage('TA') {
-            when { anyOf { branch 'master'; changeRequest() } }
+            when { anyOf { branch 'master'; branch 'dev'; changeRequest() } }
             steps {
                 script {
                     checkout scm
@@ -16,22 +16,23 @@ pipeline {
             }
         }
         stage('Create release tag') {
-            when { branch 'master' }
+            when { anyOf { branch 'dev' } }
             steps {
                 checkout scm
                 script {
                     getRepoURL()
                     getVersion()
                     getCommitEmail()
-                    echo "${VERSION_NUMBER}"
+                    version = ${VERSION_NUMBER}-rc 
+                    echo "${version}"
                     // Push tag!
                     withCredentials([string(credentialsId: 'GITLAB_OAUTH_TOKEN', variable: 'OAUTH_API')]) {
                         sh """git remote set-url origin https://oauth2:${OAUTH_API}@${repositoryUrl}"""
                     }
                     sh """git config --global user.name \"Docker agent (using Jenkins)\" """
                     sh """git config --global user.email ${committerEmail} && echo \"Setting ${committerEmail} as Tag committer\"  """
-                    sh """git tag -m \"Release tag version to ${VERSION_NUMBER}\" -a ${VERSION_NUMBER}  """
-                    sh "git push origin ${VERSION_NUMBER}"
+                    sh """git tag -m \"Release tag version to ${version}\" -a ${version}  """
+                    sh "git push origin ${version}"
                 }
             }
         }
