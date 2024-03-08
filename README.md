@@ -24,3 +24,8 @@ If any of the script's steps fail, the following steps will be executed:
 3) The resources directory (where the Phar file is located) will be deleted.
 4) The script itself will be deleted.
 5) A 500 response including the error cause will be returned.
+
+### Committing
+
+While working on this project make sure to only work on "dev" branch or other new unprotected branches en do ONLY merge requests to master
+Because the mirrored github project will be updated after every update to the master branch (protected branches).
