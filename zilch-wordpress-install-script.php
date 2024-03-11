@@ -11,7 +11,7 @@ class ScriptHelper {
     private const graphqlPluginVersion = "1.22.0";
     private const contactForm7Version = "5.9";
     private const pharFileDirectory = __DIR__ . "/WPResources";
-    private const pharFilePath = self::pharFileDirectory . "/WPResources";
+    private const pharFilePath = self::pharFileDirectory . "/wp-cli.phar";
 
     public function __construct($wordpressPath, $envFilePath, $runlevel)
     {
@@ -120,7 +120,7 @@ class ScriptHelper {
      */
     private function executeCreateWpConfig(): void {
         $envData = $this->readEnvFile();
-        if(!exec('php ' .self::pharFilePath .' config create --dbname=' . escapeshellarg($envData["DB_NAME"]) . ' --dbuser=' . escapeshellarg($envData["DB_USER"]) . ' --dbpass=' . escapeshellarg($envData["DB_PASS"]) . ' --dbhost='. escapeshellarg($envData["DB_HOST"] ?? "localhost") .' --path=' . $this->wordpressPath)) {
+        if(!exec('php ' . self::pharFilePath .' config create --dbname=' . escapeshellarg($envData["DB_NAME"]) . ' --dbuser=' . escapeshellarg($envData["DB_USER"]) . ' --dbpass=' . escapeshellarg($envData["DB_PASS"]) . ' --dbhost='. escapeshellarg($envData["DB_HOST"] ?? "localhost") .' --path=' . $this->wordpressPath)) {
             throw new Exception("Something went wrong while creating wordpress database config", 500);
         }
     }
@@ -237,6 +237,15 @@ class ScriptHelper {
     }
 
     /**
+     * @throws Exception
+     */
+    private function validatePHPVersion(): void {
+        if (version_compare(PHP_VERSION, '8.1', '<')) {
+            throw new Exception('PHP version 8.1 or higher is required.');
+        }
+    }
+
+    /**
      * it will executes couple of commands to ensure that the wordpress
      * is downloaded and installed correctly (including installing plugins, language and defining database config)
      * @sucess : it will returns a 200 response
@@ -246,8 +255,9 @@ class ScriptHelper {
      * @param $projectName
      * @return void
      */
-    public function installWpScripts($domainName, $projectName, $forceInstall = false): void {
+    public function installWpScripts($domainName, $projectName): void {
         try {
+            $this->validatePHPVersion();
             if($this->wordpressDirExists()) {
                 $error = new Error("The cms directory already exists", 400);
                 $this->generateResponse($error);
