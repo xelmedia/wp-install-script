@@ -8,7 +8,7 @@ RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.+\.php)$ /cms/$1 [L]
 
 # Rewrite query params to /cms (mostly used by WordPress and the REST_API)
-RewriteCond %{REQUEST_RUI} !^/cms
+RewriteCond %{REQUEST_URI} !^/cms
 RewriteCond %{QUERY_STRING} .
 RewriteRule ^$ /cms/ [QSA,L]
 
