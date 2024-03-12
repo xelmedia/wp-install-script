@@ -5,7 +5,7 @@ node_modules/.bin/wp-env start --update &&
 # get the php script content & htaccess file
 scriptContent=$(<../../zilch-wordpress-install-script.php)
 htaccessContent=$(<../../.htaccess)
-echo "$htaccessContent"
+
 # Use wp-env run tests-cli to execute a command inside the container to copy the content to another file
 echo "$scriptContent" | node_modules/.bin/wp-env run tests-cli tee /var/www/html/zilch-wordpress-install-script.php > /dev/null
 echo "$htaccessContent" | node_modules/.bin/wp-env run tests-cli tee /var/www/html/.htaccess > /dev/null
