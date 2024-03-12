@@ -246,7 +246,7 @@ class ScriptHelper {
     }
 
     private function executeWpReWrite(): void {
-        exec("cd $this->wordpressPath && wp rewrite structure '/%postname%/' --hard");
+        exec("cd $this->wordpressPath && " . PHP_BINARY . " " . self::pharFilePath ." rewrite structure '/%postname%/' --hard");
     }
 
     private function generateYMLFile(): void {
