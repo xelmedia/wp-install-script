@@ -89,7 +89,7 @@ class ScriptHelper {
      * @throws Exception
      */
     private function executeCoreDownload(): void {
-        if (!exec(PHP_BINARY . self::pharFilePath . ' core download --version=' . escapeshellarg(self::wordpressVersion) . ' --path=' . $this->wordpressPath)) {
+        if (!exec(PHP_BINARY . " " . self::pharFilePath . ' core download --version=' . escapeshellarg(self::wordpressVersion) . ' --path=' . $this->wordpressPath)) {
             throw new Exception("The wordpress core was not downloaded successfully", 500);
         }
         if (!$this->wordpressDirExists()) {
@@ -120,7 +120,7 @@ class ScriptHelper {
      */
     private function executeCreateWpConfig(): void {
         $envData = $this->readEnvFile();
-        if(!exec(PHP_BINARY . self::pharFilePath .' config create --dbname=' . escapeshellarg($envData["DB_NAME"]) . ' --dbuser=' . escapeshellarg($envData["DB_USER"]) . ' --dbpass=' . escapeshellarg($envData["DB_PASS"]) . ' --dbhost='. escapeshellarg($envData["DB_HOST"] ?? "localhost") .' --path=' . $this->wordpressPath)) {
+        if(!exec(PHP_BINARY . " " . self::pharFilePath .' config create --dbname=' . escapeshellarg($envData["DB_NAME"]) . ' --dbuser=' . escapeshellarg($envData["DB_USER"]) . ' --dbpass=' . escapeshellarg($envData["DB_PASS"]) . ' --dbhost='. escapeshellarg($envData["DB_HOST"] ?? "localhost") .' --path=' . $this->wordpressPath)) {
             throw new Exception("Something went wrong while creating wordpress database config", 500);
         }
     }
@@ -135,7 +135,7 @@ class ScriptHelper {
      */
     private function executeWpCoreInstall($domainName, $projectName): void {
         $adminEmail = "email@zilch.nl";
-        if(!exec(PHP_BINARY. self::pharFilePath . ' core install --url=' . escapeshellarg($domainName) . ' --title=' . escapeshellarg($projectName) . ' --admin_user=zilch-admin ' . '--admin_email=' . escapeshellarg($adminEmail) . ' --path=' . $this->wordpressPath)) {
+        if(!exec(PHP_BINARY . " " . self::pharFilePath . ' core install --url=' . escapeshellarg($domainName) . ' --title=' . escapeshellarg($projectName) . ' --admin_user=zilch-admin ' . '--admin_email=' . escapeshellarg($adminEmail) . ' --path=' . $this->wordpressPath)) {
             throw new Exception("Something went wrong while installing wordpress core for the given domain name: $domainName", 500);
         }
     }
@@ -146,7 +146,7 @@ class ScriptHelper {
      */
     private function executeWpLanguageCommands(): void {
         try {
-            if(!exec(PHP_BINARY. self::pharFilePath . ' --path=' . escapeshellarg($this->wordpressPath) . ' language core install nl_NL --activate')) {
+            if(!exec(PHP_BINARY . " " . self::pharFilePath . ' --path=' . escapeshellarg($this->wordpressPath) . ' language core install nl_NL --activate')) {
                 throw new Exception("Error executing language core install", 500);
             }
         } catch (\Throwable|Exception|Error $t) {
@@ -160,7 +160,7 @@ class ScriptHelper {
      * @throws Exception
      */
     private function installPlugin(String $plugin): void {
-        if(!exec(PHP_BINARY . self::pharFilePath . ' plugin install ' . escapeshellarg($plugin) . ' --activate --path=' . escapeshellarg($this->wordpressPath))) {
+        if(!exec(PHP_BINARY . " " . self::pharFilePath . ' plugin install ' . escapeshellarg($plugin) . ' --activate --path=' . escapeshellarg($this->wordpressPath))) {
             throw new Exception("Something went wrong while installing the plugin: $plugin", 500);
         }
     }
