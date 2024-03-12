@@ -2,7 +2,7 @@ RewriteEngine On
 RewriteBase /
 
 # Rewrite all php requests to /cms
-RewriteCond %{REQUEST_URI} !^/cms/
+RewriteCond %{REQUEST_URI} !^/cms
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.+\.php)$ /cms/$1 [L]

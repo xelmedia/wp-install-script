@@ -245,6 +245,19 @@ class ScriptHelper {
         }
     }
 
+    private function executeWpReWrite(): void {
+        exec("cd $this->wordpressPath && wp rewrite structure '/%postname%/' --hard");
+    }
+
+    private function generateYMLFile(): void {
+        $content = <<<YAML
+apache_modules:
+    - mod_rewrite
+
+YAML;
+        file_put_contents($this->wordpressPath.'/wp-cli.yml', $content);
+    }
+
     /**
      * it will executes couple of commands to ensure that the wordpress
      * is downloaded and installed correctly (including installing plugins, language and defining database config)
@@ -268,6 +281,8 @@ class ScriptHelper {
             $this->executeWpCoreInstall($domainName, $projectName);
             $this->executeWpLanguageCommands();
             $this->installPlugins();
+            $this->generateYMLFile();
+            $this->executeWpRewrite();
             $this->generateResponse();
             $this->cleanUpScript();
         } catch (Error|Exception|Throwable $e) {
