@@ -269,9 +269,9 @@ class ScriptHelper {
             $this->executeWpLanguageCommands();
             $this->installPlugins();
             $this->generateResponse();
-            $this->cleanUpScript();
+       //     $this->cleanUpScript();
         } catch (Error|Exception|Throwable $e) {
-            $this->cleanUpScript(true);
+          //  $this->cleanUpScript(true);
             $this->generateResponse($e);
         }
     }
