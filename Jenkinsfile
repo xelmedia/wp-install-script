@@ -2,7 +2,7 @@ pipeline {
     agent { label 'docker-in-docker' }
     stages {
         stage('TA') {
-            when { anyOf { branch 'master'; branch 'dev'; changeRequest() } }
+            when { anyOf { branch 'master'; branch 'dev'} }
             steps {
                 script {
                     checkout scm
