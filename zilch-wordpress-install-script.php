@@ -12,6 +12,7 @@ class ScriptHelper {
     private const contactForm7Version = "5.9";
     private const pharFileDirectory = __DIR__ . "/WPResources";
     private const pharFilePath = self::pharFileDirectory . "/wp-cli.phar";
+    private const phpBin = PHP_BINARY;
 
     public function __construct($wordpressPath, $envFilePath, $runlevel)
     {
@@ -89,7 +90,7 @@ class ScriptHelper {
      * @throws Exception
      */
     private function executeCoreDownload(): void {
-        if (!exec(PHP_BINARY . " " . self::pharFilePath . ' core download --version=' . escapeshellarg(self::wordpressVersion) . ' --path=' . $this->wordpressPath)) {
+        if (!exec(self::phpBin . " "  . self::pharFilePath . ' core download --version=' . escapeshellarg(self::wordpressVersion) . ' --path=' . $this->wordpressPath)) {
             throw new Exception("The wordpress core was not downloaded successfully", 500);
         }
         if (!$this->wordpressDirExists()) {
@@ -120,7 +121,7 @@ class ScriptHelper {
      */
     private function executeCreateWpConfig(): void {
         $envData = $this->readEnvFile();
-        if(!exec(PHP_BINARY . " " . self::pharFilePath .' config create --dbname=' . escapeshellarg($envData["DB_NAME"]) . ' --dbuser=' . escapeshellarg($envData["DB_USER"]) . ' --dbpass=' . escapeshellarg($envData["DB_PASS"]) . ' --dbhost='. escapeshellarg($envData["DB_HOST"] ?? "localhost") .' --path=' . $this->wordpressPath)) {
+        if(!exec(self::phpBin  . " " . self::pharFilePath .' config create --dbname=' . escapeshellarg($envData["DB_NAME"]) . ' --dbuser=' . escapeshellarg($envData["DB_USER"]) . ' --dbpass=' . escapeshellarg($envData["DB_PASS"]) . ' --dbhost='. escapeshellarg($envData["DB_HOST"] ?? "localhost") .' --path=' . $this->wordpressPath)) {
             throw new Exception("Something went wrong while creating wordpress database config", 500);
         }
     }
@@ -135,7 +136,7 @@ class ScriptHelper {
      */
     private function executeWpCoreInstall($domainName, $projectName): void {
         $adminEmail = "email@zilch.nl";
-        if(!exec(PHP_BINARY . " " . self::pharFilePath . ' core install --url=' . escapeshellarg($domainName) . ' --title=' . escapeshellarg($projectName) . ' --admin_user=zilch-admin ' . '--admin_email=' . escapeshellarg($adminEmail) . ' --path=' . $this->wordpressPath)) {
+        if(!exec(self::phpBin  . " " . self::pharFilePath . ' core install --url=' . escapeshellarg($domainName) . ' --title=' . escapeshellarg($projectName) . ' --admin_user=zilch-admin ' . '--admin_email=' . escapeshellarg($adminEmail) . ' --path=' . $this->wordpressPath)) {
             throw new Exception("Something went wrong while installing wordpress core for the given domain name: $domainName", 500);
         }
     }
@@ -146,7 +147,7 @@ class ScriptHelper {
      */
     private function executeWpLanguageCommands(): void {
         try {
-            if(!exec(PHP_BINARY . " " . self::pharFilePath . ' --path=' . escapeshellarg($this->wordpressPath) . ' language core install nl_NL --activate')) {
+            if(!exec(self::phpBin  . " " . self::pharFilePath . ' --path=' . escapeshellarg($this->wordpressPath) . ' language core install nl_NL --activate')) {
                 throw new Exception("Error executing language core install", 500);
             }
         } catch (\Throwable|Exception|Error $t) {
@@ -160,7 +161,7 @@ class ScriptHelper {
      * @throws Exception
      */
     private function installPlugin(String $plugin): void {
-        if(!exec(PHP_BINARY . " " . self::pharFilePath . ' plugin install ' . escapeshellarg($plugin) . ' --activate --path=' . escapeshellarg($this->wordpressPath))) {
+        if(!exec(self::phpBin  . " " . self::pharFilePath . ' plugin install ' . escapeshellarg($plugin) . ' --activate --path=' . escapeshellarg($this->wordpressPath))) {
             throw new Exception("Something went wrong while installing the plugin: $plugin", 500);
         }
     }
@@ -246,7 +247,7 @@ class ScriptHelper {
     }
 
     private function executeWpReWrite(): void {
-        exec("cd $this->wordpressPath && " . PHP_BINARY . " " . self::pharFilePath ." rewrite structure '/%postname%/' --hard");
+        exec(self::phpBin  . " " . self::pharFilePath  . " " . "rewrite structure '/%postname%/' --hard  --path=" . $this->wordpressPath);
     }
 
     private function generateYMLFile(): void {
@@ -255,7 +256,7 @@ apache_modules:
     - mod_rewrite
 
 YAML;
-        file_put_contents($this->wordpressPath.'/wp-cli.yml', $content);
+        file_put_contents(__DIR__.'/wp-cli.yml', $content);
     }
 
     /**
@@ -294,17 +295,8 @@ YAML;
 
 
 function getOptions() {
-    // Check if the script is called from the command line or web browser
-    if (php_sapi_name() === 'cli') {
-        // Get options from the command line
-        return getopt("p:d:r:", ["projectName:", "domainName:", "RUN_LEVEL"]);
-    } else {
-        // Get options from query parameters in the URL
-        return [
-            'p' => $_GET['projectName'] ?? null,
-            'd' => $_GET['domainName'] ?? null,
-        ];
-    }
+    // Get options from the command line
+    return getopt("p:d:r:", ["projectName:", "domainName:", "RUN_LEVEL"]);
 }
 
 // get the options of the command
