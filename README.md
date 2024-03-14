@@ -28,7 +28,7 @@ If any of the script's steps fail, the following steps will be executed:
 
 ### Script Requirements:
 1) PHP version >= 8.1
-2) .db.env file that contains the necessary data to create a database connection
+2) `.db.env` file that contains the necessary data to create a database connection
 3) The format of the env file should be as following:
 ```
 DB_HOST=
