@@ -2,7 +2,7 @@
 
 This project automates the process of installing WordPress on client sites. It's designed to streamline the setup by handling WordPress core download, configuration, plugin installation, and more through an efficient, automated script.
 
-The expectation is that the ` zilch-wordpress-install-script.php` and the `.htaccess` file should be downloaded to the document root and executed.
+The expectation is that the `zilch-wordpress-install-script.php` and the `.htaccess` file should be downloaded to the document root and executed.
 
 ## WPInstallScript
 
