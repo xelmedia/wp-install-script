@@ -3,9 +3,7 @@
 class ScriptHelper {
     private string $wordpressPath;
     private string $envFilePath;
-
-    private string $runlevel;
-
+    
     private const wordpressVersion = '6.4.2';
     private const graphqlGutenbergPluginVersion = "0.4.1";
     private const graphqlPluginVersion = "1.22.0";
@@ -14,11 +12,10 @@ class ScriptHelper {
     private const pharFilePath = self::pharFileDirectory . "/wp-cli.phar";
     private const phpBin = PHP_BINARY;
 
-    public function __construct($wordpressPath, $envFilePath, $runlevel)
+    public function __construct($wordpressPath, $envFilePath)
     {
         $this->wordpressPath = $wordpressPath;
         $this->envFilePath = $envFilePath;
-        $this->runlevel = $runlevel;
     }
 
     /**
@@ -222,11 +219,6 @@ class ScriptHelper {
         }
     }
 
-    private function isProduction(): bool {
-        $lowercaseRunLevel = strtolower($this->runlevel);
-        return $lowercaseRunLevel === "prod" || $lowercaseRunLevel === "production";
-    }
-
     private function cleanUpScript($removeWordPress = false): void {
         $this->removeFile($this->envFilePath);
         $this->removeDir(__DIR__."/WPResources");
@@ -296,7 +288,7 @@ YAML;
 
 function getOptions() {
     // Get options from the command line
-    return getopt("p:d:r:", ["projectName:", "domainName:", "RUN_LEVEL"]);
+    return getopt("p:d:", ["projectName:", "domainName:"]);
 }
 
 // get the options of the command
@@ -308,7 +300,5 @@ if(!$domainName || !$projectName) {
     echo "Usage: php zilch-wordpress-install-script.php -p <projectName> -d <domainName> OR php zilch-wordpress-install-script.php --projectName=<projectName> --domainName=<domainName>";
     exit(1);
 }
-// set run level by default to development if it was not given
-$runLevel = $options['r'] ?? $options["RUN_LEVEL"] ?? "development";
-$helper = new ScriptHelper(__DIR__."/cms", __DIR__."/.db.env", $runLevel);
+$helper = new ScriptHelper(__DIR__."/cms", __DIR__."/.db.env");
 $helper->installWpScripts($domainName, $projectName);
