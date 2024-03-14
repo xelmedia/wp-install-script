@@ -11,7 +11,7 @@ The expectation is that the `zilch-wordpress-install-script.php` and the `.htacc
 1) The script will download a Phar file that helps execute different WordPress commands such as `wp core download`.
 2) The script will execute `wp core download` to download the WordPress files.
 3) The `wp config create` command will be executed to create a `wp-config.php` file inside the WordPress files to establish a database connection. This step will fail if the database is unreachable.
-4) WordPress installation & language installation will be executed.
+4) WordPress' installation & language installation will be executed.
 5) Different plugins will be installed, e.g., `wp-graphql`, `zilch assistant plugin`.
 6) If all the previous steps have succeeded, a 200 response will be returned.
 7) After succession some files and folders will be deleted.
