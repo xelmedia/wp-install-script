@@ -1,6 +1,6 @@
 # WP Install Script
 
-This project is responsible for installing WordPress on client sites.
+This project automates the process of installing WordPress on client sites. It's designed to streamline the setup by handling WordPress core download, configuration, plugin installation, and more through an efficient, automated script.
 
 The expectation is that the ` zilch-wordpress-install-script.php` and the `.htaccess` file should be downloaded to the document root and executed.
 
@@ -21,14 +21,14 @@ The expectation is that the ` zilch-wordpress-install-script.php` and the `.htac
 If any of the script's steps fail, the following steps will be executed:
 
 1) The WordPress directory will be deleted.
-2) The db env file will be deleted.
+2) The `.db.env` file will be deleted.
 3) The resources directory (where the Phar file is located) will be deleted.
 4) The script itself will be deleted.
 5) A 500 response including the error cause will be returned.
 
 ### Script Requirements:
-1) php version >= 8.1
-2) .db.env file that contains the needed data to create a database connection
+1) PHP version >= 8.1
+2) .db.env file that contains the necessary data to create a database connection
 3) The format of the env file should be as following:
 ```
 DB_HOST=
@@ -36,8 +36,11 @@ DB_NAME=
 DB_PASS=
 DB_USER=
 ```
-4) .htaccess file available.
+4) The .htaccess file must be in place
 
 ### Execute the script
 To execute the script, use the following command in your terminal:
+
 `php zilch-wordpress-install-script.php -d [domainName] -p [projectName]`
+
+Replace [domainName] and [projectName] with your actual domain name and project name.
