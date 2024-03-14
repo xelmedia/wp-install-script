@@ -28,10 +28,4 @@ If any of the script's steps fail, the following steps will be executed:
 ### Call the script
 
 Basically it's just a php script, so you can call it by doing the next :
-php zilch-wordpress-install-script.php 
-the script contains 2 parameters: (-d) domainName & (-p) projectName and 1 optional parameter (-r) RUN_LEVEL
-
-### Committing
-
-While working on this project make sure to only work on "dev" branch or other new unprotected branches en do ONLY merge requests to master
-Because the mirrored github project will be updated after every update to the master branch (protected branches).
+php zilch-wordpress-install-script.php -d [domainName] -p [projectname] 
