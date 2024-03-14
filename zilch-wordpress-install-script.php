@@ -223,6 +223,7 @@ class ScriptHelper {
         $this->removeFile($this->envFilePath);
         $this->removeDir(__DIR__."/WPResources");
         unlink(__FILE__);
+        unlink(__DIR__."/wp-cli.yml");
         if($removeWordPress) {
             $this->removeDir($this->wordpressPath);
             $this->removeFile(__DIR__."/.htaccess");

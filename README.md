@@ -2,7 +2,7 @@
 
 This project is responsible for installing WordPress on client sites.
 
-The expectation is that the `WPInstallScript.php` and the `.htaccess` file should be downloaded to the document root and executed.
+The expectation is that the ` zilch-wordpress-install-script.php` and the `.htaccess` file should be downloaded to the document root and executed.
 
 ## WPInstallScript
 
@@ -14,6 +14,7 @@ The expectation is that the `WPInstallScript.php` and the `.htaccess` file shoul
 4) WordPress installation & language installation will be executed.
 5) Different plugins will be installed, e.g., `wp-graphql`, `zilch assistant plugin`.
 6) If all the previous steps have succeeded, a 200 response will be returned.
+7) After succession some files and folders will be deleted.
 
 ### Steps failure:
 
@@ -25,7 +26,16 @@ If any of the script's steps fail, the following steps will be executed:
 4) The script itself will be deleted.
 5) A 500 response including the error cause will be returned.
 
-### Call the script
+### Script Requirements:
+1) php version >= 8.1
+2) .db.env file that contains the needed data to create a database connection
+3) The format of the env file should look like that
+`DB_HOST=
+ DB_NAME=
+ DB_PASS=
+ DB_USER=`
+4) .htaccess file available.
 
-Basically it's just a php script, so you can call it by doing the next :
-php zilch-wordpress-install-script.php -d [domainName] -p [projectname] 
+### Execute the script
+To execute the script, use the following command in your terminal:
+php zilch-wordpress-install-script.php -d [domainName] -p [projectName]
