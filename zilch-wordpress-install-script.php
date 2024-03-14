@@ -3,7 +3,7 @@
 class ScriptHelper {
     private string $wordpressPath;
     private string $envFilePath;
-    
+
     private const wordpressVersion = '6.4.2';
     private const graphqlGutenbergPluginVersion = "0.4.1";
     private const graphqlPluginVersion = "1.22.0";
