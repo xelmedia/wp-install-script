@@ -30,12 +30,14 @@ If any of the script's steps fail, the following steps will be executed:
 1) php version >= 8.1
 2) .db.env file that contains the needed data to create a database connection
 3) The format of the env file should look like that
-`DB_HOST=
- DB_NAME=
- DB_PASS=
- DB_USER=`
+```
+DB_HOST=
+DB_NAME=
+DB_PASS=
+DB_USER=
+```
 4) .htaccess file available.
 
 ### Execute the script
 To execute the script, use the following command in your terminal:
-php zilch-wordpress-install-script.php -d [domainName] -p [projectName]
+`php zilch-wordpress-install-script.php -d [domainName] -p [projectName]`
