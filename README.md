@@ -36,7 +36,7 @@ DB_NAME=
 DB_PASS=
 DB_USER=
 ```
-4) The .htaccess file must be in place 
+4) The .htaccess file must be in place
 
 ### Execute the script
 To execute the script, use the following command in your terminal:
