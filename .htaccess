@@ -19,5 +19,6 @@ RewriteRule ^wp-(.*)$ /cms/wp-$1 [L]
 RedirectMatch 301 ^/cms/?$ /cms/wp-admin
 
 # Rewrite all other rules to /public_html
+RewriteCond %{REQUEST_URI} !^/public_html/
 RewriteCond %{ENV:REDIRECT_STATUS} ^$
 RewriteRule (.*) /public_html/$1 [L]
