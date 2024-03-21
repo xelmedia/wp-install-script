@@ -2,7 +2,7 @@ RewriteEngine On
 RewriteBase /
 
 # Rewrite all php requests to /cms
-RewriteCond %{REQUEST_URI} !^/cms
+RewriteCond %{REQUEST_URI} !^/cms/
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.+\.php)$ /cms/$1 [L]
@@ -14,10 +14,12 @@ RewriteRule ^$ /cms/ [QSA,L]
 
 # Rewrite ^wp-* requests to /cms
 RewriteRule ^wp-(.*)$ /cms/wp-$1 [L]
+RewriteRule ^graphql(.*)$ /cms/graphql/$1 [L]
 
 # Redirect /cms or /cms/ to /cms/wp-admin
 RedirectMatch 301 ^/cms/?$ /cms/wp-admin
 
 # Rewrite all other rules to /public_html
+RewriteCond %{REQUEST_URI} !^/public_html/
 RewriteCond %{ENV:REDIRECT_STATUS} ^$
 RewriteRule (.*) /public_html/$1 [L]
