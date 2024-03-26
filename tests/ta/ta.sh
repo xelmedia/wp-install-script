@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-yarn add @wordpress/scripts @wordpress/env copy-webpack-plugin
+#yarn add @wordpress/scripts @wordpress/env copy-webpack-plugin
 node_modules/.bin/wp-env stop || :
 node_modules/.bin/wp-env start --update &&
 # get the php script content & htaccess file
