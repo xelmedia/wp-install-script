@@ -223,7 +223,7 @@ class ScriptHelper {
         $this->removeFile($this->envFilePath);
         $this->removeDir(__DIR__."/WPResources");
         unlink(__FILE__);
-        unlink(__DIR__."/wp-cli.yml");
+        unlink("$this->wordpressPath/wp-cli.yml");
         if($removeWordPress) {
             $this->removeDir($this->wordpressPath);
             $this->removeFile(__DIR__."/.htaccess");
@@ -240,7 +240,7 @@ class ScriptHelper {
     }
 
     private function executeWpReWrite(): void {
-        exec(self::phpBin  . " " . self::pharFilePath  . " " . "rewrite structure '/%postname%/' --hard  --path=" . $this->wordpressPath);
+        exec("cd $this->wordpressPath && " . self::phpBin . " " . self::pharFilePath  . " rewrite structure '/%postname%/' --hard  --path=$this->wordpressPath");
     }
 
     private function generateYMLFile(): void {
@@ -249,7 +249,7 @@ apache_modules:
     - mod_rewrite
 
 YAML;
-        file_put_contents(__DIR__.'/wp-cli.yml', $content);
+        file_put_contents($this->wordpressPath."/wp-cli.yml", $content);
     }
 
     /**
