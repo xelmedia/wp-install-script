@@ -3,6 +3,7 @@
 class ScriptHelper {
     private string $wordpressPath;
     private string $envFilePath;
+    private string $runLevel;
 
     private const wordpressVersion = '6.4.2';
     private const graphqlGutenbergPluginVersion = "0.4.1";
@@ -12,10 +13,19 @@ class ScriptHelper {
     private const pharFilePath = self::pharFileDirectory . "/wp-cli.phar";
     private const phpBin = PHP_BINARY;
 
-    public function __construct($wordpressPath, $envFilePath)
+    public function __construct($wordpressPath, $envFilePath, $environment)
     {
         $this->wordpressPath = $wordpressPath;
         $this->envFilePath = $envFilePath;
+        $this->runLevel = $environment;
+    }
+
+    private function executeWpCommand(string $command): string|false {
+        if($this->runLevel === "localta" || $this->runLevel === "ta") {
+            return exec($command . " --allow-root");
+        } else {
+           return exec($command);
+        }
     }
 
     /**
@@ -87,7 +97,7 @@ class ScriptHelper {
      * @throws Exception
      */
     private function executeCoreDownload(): void {
-        if (!exec(self::phpBin . " "  . self::pharFilePath . ' core download --version=' . escapeshellarg(self::wordpressVersion) . ' --path=' . $this->wordpressPath)) {
+        if (!$this->executeWpCommand(self::phpBin . " "  . self::pharFilePath . ' core download --version=' . escapeshellarg(self::wordpressVersion) . ' --path=' . $this->wordpressPath)) {
             throw new Exception("The wordpress core was not downloaded successfully", 500);
         }
         if (!$this->wordpressDirExists()) {
@@ -118,7 +128,7 @@ class ScriptHelper {
      */
     private function executeCreateWpConfig(): void {
         $envData = $this->readEnvFile();
-        if(!exec(self::phpBin  . " " . self::pharFilePath .' config create --dbname=' . escapeshellarg($envData["DB_NAME"]) . ' --dbuser=' . escapeshellarg($envData["DB_USER"]) . ' --dbpass=' . escapeshellarg($envData["DB_PASS"]) . ' --dbhost='. escapeshellarg($envData["DB_HOST"] ?? "localhost") .' --path=' . $this->wordpressPath)) {
+        if(!$this->executeWpCommand(self::phpBin  . " " . self::pharFilePath .' config create --dbname=' . escapeshellarg($envData["DB_NAME"]) . ' --dbuser=' . escapeshellarg($envData["DB_USER"]) . ' --dbpass=' . escapeshellarg($envData["DB_PASS"]) . ' --dbhost='. escapeshellarg($envData["DB_HOST"] ?? "localhost") .' --path=' . $this->wordpressPath)) {
             throw new Exception("Something went wrong while creating wordpress database config", 500);
         }
     }
@@ -133,7 +143,7 @@ class ScriptHelper {
      */
     private function executeWpCoreInstall($domainName, $projectName): void {
         $adminEmail = "email@zilch.nl";
-        if(!exec(self::phpBin  . " " . self::pharFilePath . ' core install --url=' . escapeshellarg($domainName) . ' --title=' . escapeshellarg($projectName) . ' --admin_user=zilch-admin ' . '--admin_email=' . escapeshellarg($adminEmail) . ' --path=' . $this->wordpressPath)) {
+        if(!$this->executeWpCommand(self::phpBin  . " " . self::pharFilePath . ' core install --url=' . escapeshellarg($domainName) . ' --title=' . escapeshellarg($projectName) . ' --admin_user=zilch-admin ' . '--admin_email=' . escapeshellarg($adminEmail) . ' --path=' . $this->wordpressPath)) {
             throw new Exception("Something went wrong while installing wordpress core for the given domain name: $domainName", 500);
         }
     }
@@ -144,7 +154,7 @@ class ScriptHelper {
      */
     private function executeWpLanguageCommands(): void {
         try {
-            if(!exec(self::phpBin  . " " . self::pharFilePath . ' --path=' . escapeshellarg($this->wordpressPath) . ' language core install nl_NL --activate')) {
+            if(!$this->executeWpCommand(self::phpBin  . " " . self::pharFilePath . ' --path=' . escapeshellarg($this->wordpressPath) . ' language core install nl_NL --activate')) {
                 throw new Exception("Error executing language core install", 500);
             }
         } catch (\Throwable|Exception|Error $t) {
@@ -158,7 +168,7 @@ class ScriptHelper {
      * @throws Exception
      */
     private function installPlugin(String $plugin): void {
-        if(!exec(self::phpBin  . " " . self::pharFilePath . ' plugin install ' . escapeshellarg($plugin) . ' --activate --path=' . escapeshellarg($this->wordpressPath))) {
+        if(!$this->executeWpCommand(self::phpBin  . " " . self::pharFilePath . ' plugin install ' . escapeshellarg($plugin) . ' --activate --path=' . escapeshellarg($this->wordpressPath))) {
             throw new Exception("Something went wrong while installing the plugin: $plugin", 500);
         }
     }
@@ -240,7 +250,9 @@ class ScriptHelper {
     }
 
     private function executeWpReWrite(): void {
-        exec("cd $this->wordpressPath && " . self::phpBin . " " . self::pharFilePath  . " rewrite structure '/%postname%/' --hard  --path=$this->wordpressPath");
+       if(!$this->executeWpCommand("cd $this->wordpressPath && " . self::phpBin . " " . self::pharFilePath  . " rewrite structure '/%postname%/' --hard  --path=$this->wordpressPath")) {
+           throw new Exception("Something went wrong while executing wp rewrite", 500);
+       }
     }
 
     private function generateYMLFile(): void {
@@ -289,7 +301,7 @@ YAML;
 
 function getOptions() {
     // Get options from the command line
-    return getopt("p:d:", ["projectName:", "domainName:"]);
+    return getopt("p:d:e:", ["projectName:", "domainName:", "environment:"]);
 }
 
 // get the options of the command
@@ -297,9 +309,10 @@ $options = getOptions();
 // get the project name and domain name from the short/long options
 $projectName = $options['p'] ?? $options['projectName'] ?? null;
 $domainName = $options['d'] ?? $options['domainName'] ?? null;
+$environment = $options['e'] ?? $options['environment'] ?? "development";
 if(!$domainName || !$projectName) {
     echo "Usage: php zilch-wordpress-install-script.php -p <projectName> -d <domainName> OR php zilch-wordpress-install-script.php --projectName=<projectName> --domainName=<domainName>";
     exit(1);
 }
-$helper = new ScriptHelper(__DIR__."/cms", __DIR__."/.db.env");
+$helper = new ScriptHelper(__DIR__."/cms", __DIR__."/.db.env", $environment);
 $helper->installWpScripts($domainName, $projectName);
