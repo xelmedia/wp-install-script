@@ -3,6 +3,7 @@
 class ScriptHelper {
     private string $wordpressPath;
     private string $envFilePath;
+    private string $runLevel;
 
     private const wordpressVersion = '6.4.2';
     private const graphqlGutenbergPluginVersion = "0.4.1";
@@ -12,10 +13,11 @@ class ScriptHelper {
     private const pharFilePath = self::pharFileDirectory . "/wp-cli.phar";
     private const phpBin = PHP_BINARY;
 
-    public function __construct($wordpressPath, $envFilePath)
+    public function __construct($wordpressPath, $envFilePath, $environment)
     {
         $this->wordpressPath = $wordpressPath;
         $this->envFilePath = $envFilePath;
+        $this->runLevel = $environment;
     }
 
     /**
@@ -99,10 +101,10 @@ class ScriptHelper {
      * reads the env file and puts all the vars in an array as $key => $value
      * @return array
      */
-    private function readEnvFile(): array {
+    private function readEnvFile($path): array {
         $envData = [];
-        if (file_exists($this->envFilePath)) {
-            $lines = file($this->envFilePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        if (file_exists($path)) {
+            $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
             foreach ($lines as $line) {
                 list($key, $value) = explode('=', $line, 2);
                 $envData[trim($key)] = trim($value);
@@ -117,7 +119,7 @@ class ScriptHelper {
      * @throws Exception
      */
     private function executeCreateWpConfig(): void {
-        $envData = $this->readEnvFile();
+        $envData = $this->readEnvFile($this->envFilePath);
         if(!exec(self::phpBin  . " " . self::pharFilePath .' config create --dbname=' . escapeshellarg($envData["DB_NAME"]) . ' --dbuser=' . escapeshellarg($envData["DB_USER"]) . ' --dbpass=' . escapeshellarg($envData["DB_PASS"]) . ' --dbhost='. escapeshellarg($envData["DB_HOST"] ?? "localhost") .' --path=' . $this->wordpressPath)) {
             throw new Exception("Something went wrong while creating wordpress database config", 500);
         }
@@ -170,9 +172,7 @@ class ScriptHelper {
      * @throws Exception
      */
     private function validatePluginIsInstalled(string $pluginName): void {
-        $searchPattern = "$this->wordpressPath/wp-content/plugins/*{$pluginName}*";
-        $matchingDirectories = glob($searchPattern, GLOB_ONLYDIR);
-        if (empty($matchingDirectories)) {
+        if(!is_dir("$this->wordpressPath/wp-content/plugins/$pluginName")) {
             throw new Exception("The plugin $pluginName was not installed correctly", 500);
         }
     }
@@ -187,7 +187,7 @@ class ScriptHelper {
             'wp-graphql' => "https://downloads.wordpress.org/plugin/wp-graphql.". self::graphqlPluginVersion .".zip",
             'wp-graphql-gutenberg' => "https://github.com/pristas-peter/wp-graphql-gutenberg/archive/refs/tags/v".self::graphqlGutenbergPluginVersion.".zip",
             'contact-form-7' => "https://downloads.wordpress.org/plugin/contact-form-7.". self::contactForm7Version .".zip",
-            'zilch-assistant-plugin' => 'https://gitlab.xel.nl/albert/kameleon-assistant-plugin-zip/-/raw/latest/zilch-assistant-plugin.zip'
+            'zilch-assistant' => 'https://gitlab.xel.nl/albert/kameleon-assistant-plugin-zip/-/raw/latest/zilch-assistant.zip'
         ];
         foreach ($plugins as $pluginName => $pluginSlug) {
             $this->installPlugin($pluginSlug);
@@ -240,7 +240,9 @@ class ScriptHelper {
     }
 
     private function executeWpReWrite(): void {
-        exec("cd $this->wordpressPath && " . self::phpBin . " " . self::pharFilePath  . " rewrite structure '/%postname%/' --hard  --path=$this->wordpressPath");
+       if(!exec("cd $this->wordpressPath && " . self::phpBin . " " . self::pharFilePath  . " rewrite structure '/%postname%/' --hard  --path=$this->wordpressPath")) {
+           throw new Exception("Something went wrong while executing wp rewrite", 500);
+       }
     }
 
     private function generateYMLFile(): void {
@@ -289,7 +291,7 @@ YAML;
 
 function getOptions() {
     // Get options from the command line
-    return getopt("p:d:", ["projectName:", "domainName:"]);
+    return getopt("p:d:e:", ["projectName:", "domainName:", "environment:"]);
 }
 
 // get the options of the command
@@ -297,9 +299,10 @@ $options = getOptions();
 // get the project name and domain name from the short/long options
 $projectName = $options['p'] ?? $options['projectName'] ?? null;
 $domainName = $options['d'] ?? $options['domainName'] ?? null;
+$environment = $options['e'] ?? $options['environment'] ?? "development";
 if(!$domainName || !$projectName) {
     echo "Usage: php zilch-wordpress-install-script.php -p <projectName> -d <domainName> OR php zilch-wordpress-install-script.php --projectName=<projectName> --domainName=<domainName>";
     exit(1);
 }
-$helper = new ScriptHelper(__DIR__."/cms", __DIR__."/.db.env");
+$helper = new ScriptHelper(__DIR__."/cms", __DIR__."/.db.env", $environment);
 $helper->installWpScripts($domainName, $projectName);

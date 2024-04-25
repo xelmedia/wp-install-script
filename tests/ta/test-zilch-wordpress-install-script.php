@@ -8,7 +8,7 @@ class WPInstallScriptTest {
         $expectedPlugins = [
             'wp-graphql-gutenberg',
             'wp-graphql',
-            'zilch-assistant-plugin',
+            'zilch-assistant',
             'contact-form-7'
         ];
         foreach ($plugins as $plugin) {
