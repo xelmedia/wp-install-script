@@ -36,21 +36,30 @@ class WPInstallScriptTest {
         }
     }
     private function testWPInstallation(): void {
-        $ch = curl_init();
         $url = "http://localhost:8889/wp-admin";
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_exec($ch);
-        $finalUrl = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
 
-        curl_close($ch);
+        $context = stream_context_create(
+            [
+                'http' => [
+                'follow_location' => true
+                ]
+            ]);
 
+        file_get_contents($url, false, $context);
+        $finalUrl = '';
+
+        for ($i = count($http_response_header) - 1; $i >= 0; $i--) {
+            if (str_contains($http_response_header[$i], 'Location: ')) {
+                $finalUrl = trim(substr($http_response_header[$i], strlen('Location:')));
+                break;
+            }
+        }
         $domain = $this->readEnvFile(__DIR__."/.auth0.env")["ZILCH_AUTH0_TENANT_DOMAIN"];
-        if(!strpos($finalUrl, $domain)) {
-            throw new Exception("The redirect url does not represent the universale login page of auth0: $finalUrl");
+        if (!strpos($finalUrl, $domain)) {
+            throw new Exception("The redirect URL does not represent the universal login page of Auth0: $finalUrl");
         }
     }
+
 
     public function executeWpInstallScriptsTests() {
         $this->testWPInstallation();
