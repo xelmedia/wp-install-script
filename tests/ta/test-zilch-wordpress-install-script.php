@@ -9,7 +9,8 @@ class WPInstallScriptTest {
             'wp-graphql-gutenberg',
             'wp-graphql',
             'zilch-assistant',
-            'contact-form-7'
+            'contact-form-7',
+            'auth0'
         ];
         foreach ($plugins as $plugin) {
             foreach ($expectedPlugins as $index => $expectedPlugin) {
@@ -35,13 +36,19 @@ class WPInstallScriptTest {
         }
     }
     private function testWPInstallation(): void {
-        $loginPage = file_get_contents('http://localhost:8889/wp-login.php');
-        if ($loginPage === false) {
-            throw new Exception("Failed to retrieve login page");
-        }
+        $ch = curl_init();
+        $url = "http://localhost:8889/wp-admin";
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_exec($ch);
+        $finalUrl = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
 
-        if (strpos($loginPage, '<form name="loginform"') === false) {
-            throw new Exception("The login page does not contain the expected form");
+        curl_close($ch);
+
+        $domain = $this->readEnvFile(__DIR__."/.auth0.env")["ZILCH_AUTH0_TENANT_DOMAIN"];
+        if(!strpos($finalUrl, $domain)) {
+            throw new Exception("The redirect url does not represent the universale login page of auth0: $finalUrl");
         }
     }
 
@@ -49,6 +56,18 @@ class WPInstallScriptTest {
         $this->testWPInstallation();
         $this->testInstalledPlugins();
         $this->testWPLanguageInstalled();
+    }
+
+    private function readEnvFile($path): array {
+        $envData = [];
+        if (file_exists($path)) {
+            $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            foreach ($lines as $line) {
+                list($key, $value) = explode('=', $line, 2);
+                $envData[trim($key)] = trim($value);
+            }
+        }
+        return $envData;
     }
 }
 
