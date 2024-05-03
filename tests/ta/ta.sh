@@ -5,11 +5,14 @@ node_modules/.bin/wp-env start --update &&
 # get the php script content & htaccess file
 scriptContent=$(<../../zilch-wordpress-install-script.php)
 htaccessContent=$(<../../.htaccess)
+auth0ScriptContent=$(<../../auth0-install-ta.sh)
+auth0EnvContent=$(<./.auth0.env)
 
 # Use wp-env run tests-cli to execute a command inside the container to copy the content to another file
 echo "$scriptContent" | node_modules/.bin/wp-env run tests-cli tee /var/www/html/zilch-wordpress-install-script.php > /dev/null
 echo "$htaccessContent" | node_modules/.bin/wp-env run tests-cli tee /var/www/html/.htaccess > /dev/null
-
+echo "$auth0ScriptContent" | node_modules/.bin/wp-env run tests-cli tee /var/www/html/auth0-install.sh > /dev/null
+echo "$auth0EnvContent" | node_modules/.bin/wp-env run tests-cli tee /var/www/html/.auth0.env > /dev/null
 # Get db config from the docker container using theses commands
 db_name=$(node_modules/.bin/wp-env run tests-cli wp config get DB_NAME)
 db_user=$(node_modules/.bin/wp-env run tests-cli wp config get DB_USER)

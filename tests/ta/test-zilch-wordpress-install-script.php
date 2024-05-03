@@ -9,7 +9,8 @@ class WPInstallScriptTest {
             'wp-graphql-gutenberg',
             'wp-graphql',
             'zilch-assistant',
-            'contact-form-7'
+            'contact-form-7',
+            'auth0'
         ];
         foreach ($plugins as $plugin) {
             foreach ($expectedPlugins as $index => $expectedPlugin) {
@@ -35,20 +36,47 @@ class WPInstallScriptTest {
         }
     }
     private function testWPInstallation(): void {
-        $loginPage = file_get_contents('http://localhost:8889/wp-login.php');
-        if ($loginPage === false) {
-            throw new Exception("Failed to retrieve login page");
-        }
+        $url = "http://localhost:8889/wp-admin";
 
-        if (strpos($loginPage, '<form name="loginform"') === false) {
-            throw new Exception("The login page does not contain the expected form");
+        $context = stream_context_create([
+            'http' => [
+                'follow_location' => true,
+            ],
+        ]);
+
+        file_get_contents($url, false, $context);
+        $finalUrl = '';
+
+        for ($i = count($http_response_header) - 1; $i >= 0; $i--) {
+            if (str_contains($http_response_header[$i], 'Location: ')) {
+                $finalUrl = trim(substr($http_response_header[$i], strlen('Location:')));
+                break;
+            }
+        }
+        $domain = $this->readEnvFile(__DIR__."/.auth0.env")["ZILCH_AUTH0_TENANT_DOMAIN"];
+        $gatewayHost = $this->readEnvFile(__DIR__."/.auth0.env")["ZILCH_AUTH0_CUSTOM_TENANT_DOMAIN"];
+        if (!str_contains($finalUrl, $domain) && !str_contains($finalUrl, $gatewayHost)) {
+            throw new Exception("The redirect URL does not represent the universal login page of Auth0: $finalUrl");
         }
     }
+
 
     public function executeWpInstallScriptsTests() {
         $this->testWPInstallation();
         $this->testInstalledPlugins();
         $this->testWPLanguageInstalled();
+    }
+
+    private function readEnvFile($path): array {
+        $envData = [];
+        if (file_exists($path)) {
+            $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            foreach ($lines as $line) {
+                list($key, $value) = explode('=', $line, 2);
+                $envData[trim($key)] = trim($value);
+            }
+        }
+        return $envData;
     }
 }
 
