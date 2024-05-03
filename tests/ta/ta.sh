@@ -32,4 +32,4 @@ echo "$cleanupContent" | node_modules/.bin/wp-env run tests-cli tee /var/www/htm
 node_modules/.bin/wp-env run tests-cli chmod +x cleanup.sh
 node_modules/.bin/wp-env run tests-cli ./cleanup.sh
 node_modules/.bin/wp-env run tests-cli php zilch-wordpress-install-script.php -p p -d d
-php8.1 test-zilch-wordpress-install-script.php
+php test-zilch-wordpress-install-script.php
