@@ -53,10 +53,14 @@ class ScriptHelper {
      * @throws Exception
      */
     private function executeWPCommand(string $command, string $errorMessage = "", int $errorCode = 500): void {
-        $wpCommand = self::phpBin . " " . self::pharFilePath . " " . $command . " --path=$this->wordpressPath";
+        $wpCommand = $this->formatWPCommand($command);
         if(!exec($wpCommand)) {
             throw new Exception(!empty($errorMessage) ? $errorMessage : "Something went wrong executing the command: $wpCommand", $errorCode);
         }
+    }
+
+    private function formatWPCommand(string $command): string {
+        return self::phpBin . " " . self::pharFilePath . " " . $command . " --path=$this->wordpressPath";
     }
 
     /**
@@ -143,22 +147,25 @@ class ScriptHelper {
     }
 
     /**
+     * Install (using script) and configure auth0 plugin
+     * Saves some default auth0 config to the database
      * @throws Exception
      */
     private function configureAuth0(): void {
-        exec("chmod +x $this->auth0ScriptPath && sh $this->auth0ScriptPath");
+        $scriptDir = dirname($this->auth0ScriptPath);
+        exec("chmod +x $this->auth0ScriptPath && sh $this->auth0ScriptPath ". escapeshellarg($scriptDir));
         $this->executeWPCommand("plugin activate auth0");
         $this->validatePluginIsInstalled("auth0");
         $auth0Array = $this->readEnvFile($this->auth0EnvFilePath);
         $options = array(
             'auth0_state' => array(
-                'enable' => "true"
+                'enable' => 'true'
             ),
             'auth0_accounts' => array(
                 'matching' => 'strict',
                 'missing' => 'create',
                 'default_role' => 'administrator',
-                'passwordless' => "true"
+                'passwordless' => 'true'
             ),
             'auth0_client' => array(
                 'id' => $auth0Array["ZILCH_AUTH0_CLIENT_ID"],
@@ -174,17 +181,57 @@ class ScriptHelper {
             'auth0_sessions' => array(
                 'method' => 'cookies',
                 'session_ttl' => 0,
-                'rolling_sessions' => "true",
-                'refresh_tokens' => "false"
+                'rolling_sessions' => 'true',
+                'refresh_tokens' => 'false'
             )
         );
         foreach($options as $option_name => $option_value) {
-            $json_value = json_encode($option_value);
-            // Use escapeshellarg to escape the JSON string for use in the command
-            $escaped_value = escapeshellarg($json_value);
-            $command = "option update $option_name $escaped_value --format=json --autoload=yes";
-            $this->executeWPCommand($command, "something went wrong adding the option $option_name");
+            $current_value = $this->getOption($option_name);
+            // If option doesn't exist or is different, update it
+            if ($current_value === null || count(array_diff_assoc($option_value, $current_value)) > 0) {
+                $this->updateOption($option_name, $option_value);
+            }
         }
+    }
+
+    /**
+     * Gets option from the options table given option name
+     * Convert the option value into an array and returns it
+     * Returns null if the option doesnt exist or it cannot be converted to array
+     * @param string $option_name
+     * @return array|null
+     */
+    private function getOption(string $option_name, $array = true): array|string|null {
+        $command = $array ? "option get $option_name --format=json" : "option get $option_name";
+        $formattedCommand = $this->formatWPCommand($command);
+        $output = [];
+        try {
+            exec($formattedCommand, $output);
+            if(gettype($output) === "array") {
+                $array = [];
+                foreach ($output as $element) {
+                    $decoded = json_decode($element);
+                    foreach ($decoded as $key => $value) {
+                        $array[$key] = $value;
+                    }
+                }
+                return $array;
+            }
+            return null;
+        } catch (Throwable $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Updates the options in the option table given option name and value
+     * @throws Exception
+     */
+    private function updateOption(string $option_name, mixed $option_value): void {
+        $json_value = json_encode($option_value);
+        $escaped_value = escapeshellarg($json_value);
+        $command = "option update $option_name $escaped_value --format=json --autoload=yes";
+        $this->executeWPCommand($command, "something went wrong adding the option $option_name");
     }
 
     /**
@@ -193,14 +240,16 @@ class ScriptHelper {
      */
     private function addZilchOptions(): void {
         $authOptions = $this->readEnvFile($this->auth0EnvFilePath);
-        $zilchClient = $authOptions["ZILCH_AUTH0_CLIENT_SECRET"];
-        $gatewayHost = $authOptions["ZILCH_AUTH0_CUSTOM_TENANT_DOMAIN"];
-        $commands = [
-            "option update zilch_client_secret " . escapeshellarg($zilchClient),
-            "option update zilch_gateway_host ". escapeshellarg($gatewayHost)
+        $options = [
+            "zilch_client_secret" => $authOptions["ZILCH_AUTH0_CLIENT_SECRET"],
+            "zilch_gateway_host" =>  $authOptions["ZILCH_AUTH0_CUSTOM_TENANT_DOMAIN"]
         ];
-        foreach ($commands as $command) {
-            $this->executeWPCommand($command, "Something went wrong while adding zilch options");
+        foreach ($options as $option_name => $option_value) {
+            $currentValue = $this->getOption($option_name, false);
+            if($currentValue !== $option_value) {
+                $command = "option update $option_name ". escapeshellarg($option_value);
+                $this->executeWPCommand($command, "Something went wrong while adding zilch options");
+            }
         }
     }
 
@@ -349,7 +398,9 @@ YAML;
         $context = stream_context_create($options);
         $result = file_get_contents($postUrl, false, $context);
         if($result === false) {
-            throw new Exception("Error making request to $postUrl", 500);
+            if(strtolower($this->runLevel ) === "dev" || strtolower($this->runLevel) === "prod") {
+                throw new Exception("Error making request to $postUrl", 500);
+            }
         }
     }
 
