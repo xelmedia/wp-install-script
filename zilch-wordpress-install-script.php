@@ -227,7 +227,7 @@ class ScriptHelper {
      * Updates the options in the option table given option name and value
      * @throws Exception
      */
-    private function updateOption(string $option_name, string $option_value): void {
+    private function updateOption(string $option_name, mixed $option_value): void {
         $json_value = json_encode($option_value);
         $escaped_value = escapeshellarg($json_value);
         $command = "option update $option_name $escaped_value --format=json --autoload=yes";
