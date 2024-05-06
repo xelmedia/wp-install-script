@@ -201,21 +201,26 @@ class ScriptHelper {
      * @param string $option_name
      * @return array|null
      */
-    private function getOption(string $option_name): ?array {
-        $command = $this->formatWPCommand("option get $option_name --format=json");
+    private function getOption(string $option_name, $array = true): array|string|null {
+        $command = $array ? "option get $option_name --format=json" : "option get $option_name";
+        $formattedCommand = $this->formatWPCommand($command);
         $output = [];
-        exec($command, $output);
-        if(gettype($output) === "array") {
-            $array = [];
-            foreach ($output as $element) {
-                $decoded = json_decode($element);
-                foreach ($decoded as $key => $value) {
-                    $array[$key] = $value;
+        try {
+            exec($formattedCommand, $output);
+            if(gettype($output) === "array") {
+                $array = [];
+                foreach ($output as $element) {
+                    $decoded = json_decode($element);
+                    foreach ($decoded as $key => $value) {
+                        $array[$key] = $value;
+                    }
                 }
+                return $array;
             }
-            return $array;
+            return null;
+        } catch (Throwable $e) {
+            return null;
         }
-        return null;
     }
 
     /**
@@ -235,14 +240,16 @@ class ScriptHelper {
      */
     private function addZilchOptions(): void {
         $authOptions = $this->readEnvFile($this->auth0EnvFilePath);
-        $zilchClient = $authOptions["ZILCH_AUTH0_CLIENT_SECRET"];
-        $gatewayHost = $authOptions["ZILCH_AUTH0_CUSTOM_TENANT_DOMAIN"];
-        $commands = [
-            "option update zilch_client_secret " . escapeshellarg($zilchClient),
-            "option update zilch_gateway_host ". escapeshellarg($gatewayHost)
+        $options = [
+            "zilch_client_secret" => $authOptions["ZILCH_AUTH0_CLIENT_SECRET"],
+            "zilch_gateway_host" =>  $authOptions["ZILCH_AUTH0_CUSTOM_TENANT_DOMAIN"]
         ];
-        foreach ($commands as $command) {
-            $this->executeWPCommand($command, "Something went wrong while adding zilch options");
+        foreach ($options as $option_name => $option_value) {
+            $currentValue = $this->getOption($option_name, false);
+            if($currentValue !== $option_value) {
+                $command = "option update $option_name ". escapeshellarg($option_value);
+                $this->executeWPCommand($command, "Something went wrong while adding zilch options");
+            }
         }
     }
 
