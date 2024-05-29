@@ -4,6 +4,13 @@ This project automates the process of installing WordPress on client sites. It's
 
 The expectation is that the `zilch-wordpress-install-script.php` and the `.htaccess` file should be downloaded to the document root and executed.
 
+## TODO
+
+It would be nicer to split up the implementation in a project-like structure, with a "/src", classes and separated implementations.
+However, this script (`zilch-wordpress-install-script.php`) is a single-php script file that is downloaded by WPCLI and executed.
+
+A solution would be to create a `.phar` executable.
+
 ## WPInstallScript
 
 ### Script steps:
@@ -41,6 +48,6 @@ DB_USER=
 ### Execute the script
 To execute the script, use the following command in your terminal:
 
-`php zilch-wordpress-install-script.php -d [domainName] -p [projectName]`
+`php zilch-wordpress-install-script.php -d [domainName] -i [projectId] -p [projectName]`
 
 Replace [domainName] and [projectName] with your actual domain name and project name.
