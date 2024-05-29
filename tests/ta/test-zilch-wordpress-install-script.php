@@ -40,11 +40,12 @@ class WPInstallScriptTest {
 
         $context = stream_context_create([
             'http' => [
+                'method' => 'GET',
                 'follow_location' => true,
             ],
         ]);
 
-        file_get_contents($url, false, $context);
+        @file_get_contents($url, false, $context);
         $finalUrl = '';
 
         for ($i = count($http_response_header) - 1; $i >= 0; $i--) {
@@ -53,13 +54,13 @@ class WPInstallScriptTest {
                 break;
             }
         }
+
         $domain = $this->readEnvFile(__DIR__."/.auth0.env")["ZILCH_AUTH0_TENANT_DOMAIN"];
         $gatewayHost = $this->readEnvFile(__DIR__."/.auth0.env")["ZILCH_AUTH0_CUSTOM_TENANT_DOMAIN"];
         if (!str_contains($finalUrl, $domain) && !str_contains($finalUrl, $gatewayHost)) {
             throw new Exception("The redirect URL does not represent the universal login page of Auth0: $finalUrl");
         }
     }
-
 
     public function executeWpInstallScriptsTests() {
         $this->testWPInstallation();
