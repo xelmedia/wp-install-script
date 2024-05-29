@@ -31,5 +31,5 @@ cleanupContent=$(<./cleanup.sh)
 echo "$cleanupContent" | node_modules/.bin/wp-env run tests-cli tee /var/www/html/cleanup.sh > /dev/null
 node_modules/.bin/wp-env run tests-cli chmod +x cleanup.sh
 node_modules/.bin/wp-env run tests-cli ./cleanup.sh
-node_modules/.bin/wp-env run tests-cli php zilch-wordpress-install-script.php -p p -d d
+node_modules/.bin/wp-env run tests-cli php zilch-wordpress-install-script.php -p p -i id -d d
 php test-zilch-wordpress-install-script.php

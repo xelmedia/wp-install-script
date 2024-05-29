@@ -377,21 +377,20 @@ YAML;
         file_put_contents($this->wordpressPath."/wp-cli.yml", $content);
     }
 
-    private function deployManifest(): void {
+    private function deployManifest($projectId): void {
         $auth0Array = $this->readEnvFile($this->auth0EnvFilePath);
         $zilchClient = $auth0Array["ZILCH_AUTH0_CLIENT_SECRET"];
         $gatewayHost = $auth0Array["ZILCH_AUTH0_CUSTOM_TENANT_DOMAIN"];
         $postUrl = "https://" . $gatewayHost . "/v1/deploy/manifest";
-        $mockedData = json_encode([
-            'key' => 'value'
-        ]);
 
         $options = [
             'http' => [
                 'header' => "Content-type: application/x-www-form-urlencoded\r\n" .
                     "X-Zilch-Client-Secret: $zilchClient\r\n",
                 'method' => 'POST',
-                'content' => $mockedData
+                'content' => json_encode([
+                    'projectId' => $projectId
+                ])
             ],
         ];
 
@@ -412,9 +411,10 @@ YAML;
      * wordpress folder, env file, WPResources directory and the script itself
      * @param $domainName
      * @param $projectName
+     * @param $projectId
      * @return void
      */
-    public function installWpScripts($domainName, $projectName): void {
+    public function installWpScripts($domainName, $projectName, $projectId): void {
         try {
             $this->validatePHPVersion();
             if($this->wordpressDirExists()) {
@@ -431,7 +431,7 @@ YAML;
             $this->addZilchOptions();
             $this->generateYMLFile();
             $this->executeWpRewrite();
-            $this->deployManifest();
+            $this->deployManifest($projectId);
             $this->generateResponse();
             $this->cleanUpScript();
         } catch (Error|Exception|Throwable $e) {
@@ -444,18 +444,19 @@ YAML;
 
 function getOptions() {
     // Get options from the command line
-    return getopt("p:d:e:", ["projectName:", "domainName:", "environment:"]);
+    return getopt("p:i:d:e:", ["projectName:", "projectId:", "domainName:", "environment:"]);
 }
 
 // get the options of the command
 $options = getOptions();
 // get the project name and domain name from the short/long options
 $projectName = $options['p'] ?? $options['projectName'] ?? null;
+$projectId = $options['i'] ?? $options['projectId'] ?? null;
 $domainName = $options['d'] ?? $options['domainName'] ?? null;
 $environment = $options['e'] ?? $options['environment'] ?? "development";
-if(!$domainName || !$projectName) {
-    echo "Usage: php zilch-wordpress-install-script.php -p <projectName> -d <domainName> OR php zilch-wordpress-install-script.php --projectName=<projectName> --domainName=<domainName>";
+if(!$domainName || !$projectName || !$projectId) {
+    echo "Usage: php zilch-wordpress-install-script.php -p <projectName> -i <projectId> -d <domainName> OR php zilch-wordpress-install-script.php --projectName=<projectName> --projectId=<projectId> --domainName=<domainName>";
     exit(1);
 }
 $helper = new ScriptHelper(__DIR__."/cms", __DIR__."/.db.env", __DIR__ . "/.auth0.env", __DIR__."/auth0-install.sh", $environment);
-$helper->installWpScripts($domainName, $projectName);
+$helper->installWpScripts($domainName, $projectName, $projectId);
