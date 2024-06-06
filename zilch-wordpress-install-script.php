@@ -377,7 +377,7 @@ YAML;
         file_put_contents($this->wordpressPath."/wp-cli.yml", $content);
     }
 
-    private function deployManifest($projectId): void {
+    private function deployManifest($projectId, $domainName): void {
         $auth0Array = $this->readEnvFile($this->auth0EnvFilePath);
         $zilchClient = $auth0Array["ZILCH_AUTH0_CLIENT_SECRET"];
         $gatewayHost = $auth0Array["ZILCH_AUTH0_CUSTOM_TENANT_DOMAIN"];
@@ -387,6 +387,7 @@ YAML;
             'http' => [
                 'header' => "Content-type: application/x-www-form-urlencoded\r\n" .
                     "X-Zilch-Client-Secret: $zilchClient\r\n",
+                    "X-Zilch-Client-Host: $domainName\r\n",
                 'method' => 'POST',
                 'content' => json_encode([
                     'projectId' => $projectId
@@ -431,7 +432,7 @@ YAML;
             $this->addZilchOptions();
             $this->generateYMLFile();
             $this->executeWpRewrite();
-            $this->deployManifest($projectId);
+            $this->deployManifest($projectId, $domainName);
             $this->generateResponse();
             $this->cleanUpScript();
         } catch (Error|Exception|Throwable $e) {
