@@ -441,7 +441,6 @@ YAML;
     }
 }
 
-
 function getOptions() {
     // Get options from the command line
     return getopt("p:i:d:e:", ["projectName:", "projectId:", "domainName:", "environment:"]);
