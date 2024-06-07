@@ -8,5 +8,5 @@ composer require -n symfony/http-client nyholm/psr7 auth0/wordpress:^5.0
 mkdir ../auth0
 mv ./vendor/auth0/wordpress/* ../auth0
 cd ../auth0 || exit
-composer install --no-dev
+composer install --no-dev --ignore-platform-req=ext-sockets
 rm -rf "$script_dir"/cms/wp-content/plugins/auth0-tmp/
