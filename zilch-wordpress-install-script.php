@@ -363,9 +363,9 @@ class ScriptHelper {
     }
 
     private function executeWpReWrite(): void {
-       if(!exec("cd $this->wordpressPath && " . self::phpBin . " " . self::pharFilePath  . " rewrite structure '/%postname%/' --hard  --path=$this->wordpressPath")) {
-           throw new Exception("Something went wrong while executing wp rewrite", 500);
-       }
+        if(!exec("cd $this->wordpressPath && " . self::phpBin . " " . self::pharFilePath  . " rewrite structure '/%postname%/' --hard  --path=$this->wordpressPath")) {
+            throw new Exception("Something went wrong while executing wp rewrite", 500);
+        }
     }
 
     private function generateYMLFile(): void {
@@ -387,7 +387,7 @@ YAML;
             "Content-Type: application/json",
             "X-Zilch-Client-Secret: $zilchClient",
             "X-Zilch-Client-Host: $domainName",
-        ]
+        ];
         $options = [
             'http' => [
                 'header' => implode("\r\n", $headers),
