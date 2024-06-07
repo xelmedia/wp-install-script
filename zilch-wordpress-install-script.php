@@ -383,11 +383,14 @@ YAML;
         $gatewayHost = $auth0Array["ZILCH_AUTH0_CUSTOM_TENANT_DOMAIN"];
         $postUrl = "https://" . $gatewayHost . "/v1/deploy/manifest";
 
+        $headers = [
+            "Content-Type: application/json",
+            "X-Zilch-Client-Secret: $zilchClient",
+            "X-Zilch-Client-Host: $domainName",
+        ]
         $options = [
             'http' => [
-                'header' => "Content-type: application/json\r\n" .
-                    "X-Zilch-Client-Secret: $zilchClient\r\n",
-                    "X-Zilch-Client-Host: $domainName\r\n",
+                'header' => implode("\r\n", $headers),
                 'method' => 'POST',
                 'content' => json_encode([
                     'projectId' => $projectId
