@@ -385,7 +385,7 @@ YAML;
 
         $options = [
             'http' => [
-                'header' => "Content-type: application/x-www-form-urlencoded\r\n" .
+                'header' => "Content-type: application/json\r\n" .
                     "X-Zilch-Client-Secret: $zilchClient\r\n",
                     "X-Zilch-Client-Host: $domainName\r\n",
                 'method' => 'POST',
