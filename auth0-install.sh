@@ -12,5 +12,5 @@ php8.1 composer.phar require -n symfony/http-client nyholm/psr7 auth0/wordpress:
 mkdir ../auth0
 mv ./vendor/auth0/wordpress/* ../auth0
 cd ../auth0 || exit
-php8.1 ../auth0-tmp/composer.phar install --no-dev
+php8.1 ../auth0-tmp/composer.phar install --no-dev --ignore-platform-req=ext-sockets
 rm -rf "$script_dir"/cms/wp-content/plugins/auth0-tmp/
