@@ -435,7 +435,6 @@ YAML;
             $this->addZilchOptions();
             $this->generateYMLFile();
             $this->executeWpRewrite();
-            $this->generateResponse();
             $this->cleanUpScript();
         } catch (Error|Exception|Throwable $e) {
             $this->cleanUpScript(true);
@@ -449,6 +448,7 @@ YAML;
         } catch(Throwable $t) {
             // Installation is succes, but deploying failed. Report/log as error, but not as error response.
         }
+        $this->generateResponse();
     }
 }
 
