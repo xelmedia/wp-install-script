@@ -447,7 +447,7 @@ YAML;
         try {
             $this->deployManifest($projectId, $domainName);
         } catch(Throwable $t) {
-            $this->generateResponse($e);
+            // Installation is succes, but deploying failed. Report/log as error, but not as error response.
         }
     }
 }
