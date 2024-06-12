@@ -435,11 +435,18 @@ YAML;
             $this->addZilchOptions();
             $this->generateYMLFile();
             $this->executeWpRewrite();
-            $this->deployManifest($projectId, $domainName);
             $this->generateResponse();
             $this->cleanUpScript();
         } catch (Error|Exception|Throwable $e) {
             $this->cleanUpScript(true);
+            $this->generateResponse($e);
+            return;
+        }
+
+        // Do not cleanup if only deploying fails.
+        try {
+            $this->deployManifest($projectId, $domainName);
+        } catch(Throwable $t) {
             $this->generateResponse($e);
         }
     }
