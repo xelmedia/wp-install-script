@@ -6,6 +6,7 @@ class WPInstallScriptTest {
         $plugins = exec("node_modules/.bin/wp-env run tests-cli wp plugin list --format=json --path=/var/www/html/cms");
         $plugins = json_decode($plugins);
         $expectedPlugins = [
+            'wp-gatsby',
             'wp-graphql-gutenberg',
             'wp-graphql',
             'zilch-assistant',
