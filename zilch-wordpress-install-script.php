@@ -305,6 +305,7 @@ class ScriptHelper {
      */
     private function installPlugins(): void {
         $plugins = [
+            'wp-gatsby' => "https://downloads.wordpress.org/plugin/wp-gatsby.zip",
             'wp-graphql' => "https://downloads.wordpress.org/plugin/wp-graphql.". self::graphqlPluginVersion .".zip",
             'wp-graphql-gutenberg' => "https://github.com/pristas-peter/wp-graphql-gutenberg/archive/refs/tags/v".self::graphqlGutenbergPluginVersion.".zip",
             'contact-form-7' => "https://downloads.wordpress.org/plugin/contact-form-7.". self::contactForm7Version .".zip",
