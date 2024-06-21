@@ -341,13 +341,16 @@ class ScriptHelper {
         }
     }
 
-    private function cleanUpScript($removeWordPress = false): void {
+    private function cleanUpScript($removeWordPress = false, $deployed = false): void {
+        if ($deployed) {
+            unlink($this->auth0EnvFilePath);
+            return;
+        }
         $this->removeFile($this->dbEnvFilePath);
         $this->removeDir(__DIR__."/WPResources");
         unlink(__FILE__);
         unlink("$this->wordpressPath/wp-cli.yml");
         unlink($this->auth0ScriptPath);
-        unlink($this->auth0EnvFilePath);
         if($removeWordPress) {
             $this->removeDir($this->wordpressPath);
             $this->removeFile(__DIR__."/.htaccess");
@@ -449,6 +452,7 @@ YAML;
         } catch(Throwable $t) {
             // Installation is succes, but deploying failed. Report/log as error, but not as error response.
         }
+        $this->cleanUpScript(false, true);
         $this->generateResponse();
     }
 }
