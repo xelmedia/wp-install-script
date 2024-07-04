@@ -19,10 +19,8 @@ pharFile="../../zilch-wordpress-install-script.phar"
 NEW_CONTAINER_ID=$(docker ps --filter "name=tests-cli" -q)
 cd ../../ || exit 1
 if [ "$LOCAL" == "true" ]; then
-    # Local environment
     composer install -n
 else
-    # Non-local environment
     wget -q https://getcomposer.org/composer.phar
     php composer.phar install -n
     rm composer.phar
