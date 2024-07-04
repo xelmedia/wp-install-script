@@ -13,6 +13,7 @@ sleep 10
 pharFile="../../zilch-wordpress-install-script.phar"
 NEW_CONTAINER_ID=$(docker ps --filter "name=tests-cli" -q)
 cd ../../ || exit 1
+composer install -n
 ./vendor/bin/box compile
 cd - || exit 1
 docker cp "$pharFile" $NEW_CONTAINER_ID:/var/www/html/zilch-wordpress-install-script.phar
