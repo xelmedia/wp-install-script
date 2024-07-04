@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+LOCAL=false
+
+if [ "$1" == "true" ] || [ "$1" == "false" ]; then
+    LOCAL=$1
+fi
 yarn add @wordpress/scripts @wordpress/env copy-webpack-plugin
 node_modules/.bin/wp-env stop || :
 node_modules/.bin/wp-env clean
@@ -13,7 +18,15 @@ sleep 10
 pharFile="../../zilch-wordpress-install-script.phar"
 NEW_CONTAINER_ID=$(docker ps --filter "name=tests-cli" -q)
 cd ../../ || exit 1
-composer install -n
+if [ "$LOCAL" == "true" ]; then
+    # Local environment
+    composer install -n
+else
+    # Non-local environment
+    curl -sS https://getcomposer.org/installer | php
+    php composer.phar install -n
+    rm composer.phar
+fi
 ./vendor/bin/box compile
 cd - || exit 1
 docker cp "$pharFile" $NEW_CONTAINER_ID:/var/www/html/zilch-wordpress-install-script.phar
