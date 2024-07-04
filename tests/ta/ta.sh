@@ -23,7 +23,7 @@ if [ "$LOCAL" == "true" ]; then
     composer install -n
 else
     # Non-local environment
-    curl -sS https://getcomposer.org/installer | php
+    wget -q https://getcomposer.org/composer.phar
     php composer.phar install -n
     rm composer.phar
 fi
