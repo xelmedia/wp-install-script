@@ -36,6 +36,16 @@ pipeline {
                 }
             }
         }
+        stage('Create phar file') {
+            when { anyOf { branch 'master' } }
+            steps {
+                checkout scm
+                script {
+                    sh "./vendor/bin/box compile"
+                    commitNewPhar()
+                }
+            }
+        }
     }
     post {
         success{
@@ -70,7 +80,9 @@ def getRepoURL(){
 }
 
 def getVersion(){
-    version = sh returnStdout: true, script: """(egrep -o "([0-9]{1,}\\.)+[0-9]{1,}" version.properties)"""
+    JSON_TEXT = readFile('composer.json').trim()
+    JSON = readJSON text: jsonText
+    VERSION = json.version
     VERSION_TRIM = version.trim()
     VERSION_NUMBER = "${VERSION_TRIM}"
 }
@@ -80,5 +92,25 @@ def slackSendMessage(color, message){
             color: """$color""",
             message: """$message"""
     )
+}
+
+def loginGitlab() {
+    getRepoURL()
+    getCommitEmail()
+    // Push tag!
+    withCredentials([string(credentialsId: 'GITLAB_OAUTH_TOKEN', variable: 'OAUTH_API')]) {
+        sh """git remote set-url origin https://oauth2:${OAUTH_API}@${repositoryUrl}"""
+    }
+    sh """git config --global user.name \"Docker agent (using Jenkins)\" """
+    sh """git config --global user.email ${committerEmail} && echo \"Setting ${committerEmail} as Tag committer\"  """
+}
+
+
+def commitNewPhar() {
+    loginGitlab()
+    sh """git checkout master"""
+    sh 'git add zilch-wordpress-install-script.phar'
+    sh """git commit --no-verify -m \"Committing the new generated phar file [skip ci]\" """
+    sh 'git push origin master'
 }
 

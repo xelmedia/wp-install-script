@@ -1,0 +1,29 @@
+{
+  "version": "1.8.13",
+  "name": "chameleon/wp-install-script",
+  "description": "A script for installing WordPress with various plugins and configurations.",
+  "type": "project",
+  "require": {
+    "php": "^8.1",
+    "ext-json": "*"
+  },
+  "require-dev": {
+    "humbug/box": "^3.14",
+    "phpunit/phpunit": "^10.5"
+  },
+  "autoload": {
+    "psr-4": {
+      "App\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "App\\": "tests/TestCase"
+    }
+  },
+  "prefer-stable": true,
+  "config": {
+    "platform-check": false,
+    "sort-packages": true
+  }
+}
