@@ -1,5 +1,9 @@
 pipeline {
-    agent { label 'docker-in-docker' }
+    agent { label 'docker-in-docker'}
+    environment {
+        CI_REGISTRY_URL = "gitlab.xel.nl:4567"
+        KAMELEON_PIPELINE_TAG =  "${env.BUILD_NUMBER}"
+    }
     stages {
         stage ('Test and report') {
             when { anyOf { branch 'master'; branch 'dev'; changeRequest() } }
@@ -136,3 +140,8 @@ def commitNewPhar() {
     sh 'git push origin master'
 }
 
+def loginDockerGitlab() {
+    withCredentials([string(credentialsId: 'GITLAB_DOCKER_REGISTRY_USER_PW', variable: 'GITLAB_PASS')]) {
+        sh """ echo '$GITLAB_PASS' |  docker login -u "kameleon_docker_registry" --password-stdin "${env.CI_REGISTRY_URL}" """
+    }
+}
