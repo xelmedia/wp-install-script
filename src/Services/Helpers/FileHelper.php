@@ -8,14 +8,16 @@ use Exception;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
-class FileHelper {
+class FileHelper
+{
 
     /**
      * Checks if the given path exists (dir or file)
      * @param string $path
      * @return bool
      */
-    public static function pathExists(string $path): bool {
+    public static function pathExists(string $path): bool
+    {
         return file_exists($path);
     }
 
@@ -24,7 +26,8 @@ class FileHelper {
      * @param string $path
      * @return void
      */
-    public static function createDir(string $path): void {
+    public static function createDir(string $path): void
+    {
         if (!file_exists($path)) {
             mkdir($path, 0777, true);
         }
@@ -36,8 +39,9 @@ class FileHelper {
      * @param $path
      * @return void
      */
-    public static function removeFile($path): void {
-        if(file_exists($path)) {
+    public static function removeFile($path): void
+    {
+        if (file_exists($path)) {
             unlink($path);
             return;
         }
@@ -48,11 +52,14 @@ class FileHelper {
      * removes a directory given the path
      * No errors will be thrown if the directory doesnt exist
      */
-    public static function removeDir($dirPath): void {
+    public static function removeDir($dirPath): void
+    {
         if (file_exists($dirPath)) {
             $it = new RecursiveDirectoryIterator($dirPath, RecursiveDirectoryIterator::SKIP_DOTS);
-            $files = new RecursiveIteratorIterator($it,
-                RecursiveIteratorIterator::CHILD_FIRST);
+            $files = new RecursiveIteratorIterator(
+                $it,
+                RecursiveIteratorIterator::CHILD_FIRST
+            );
             foreach ($files as $file) {
                 if ($file->isDir()) {
                     rmdir($file->getPathname());
@@ -69,7 +76,8 @@ class FileHelper {
      * @param $path
      * @return array
      */
-    public static function readEnvFile($path): array {
+    public static function readEnvFile($path): array
+    {
         $envData = [];
         if (file_exists($path)) {
             $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
@@ -87,13 +95,15 @@ class FileHelper {
      * throws an error if the plugin couldn't be found
      * @throws Exception
      */
-    public static function validatePluginIsInstalled(string $wordpressPath, string $pluginName): void {
-        if(!is_dir("$wordpressPath/wp-content/plugins/$pluginName")) {
+    public static function validatePluginIsInstalled(string $wordpressPath, string $pluginName): void
+    {
+        if (!is_dir("$wordpressPath/wp-content/plugins/$pluginName")) {
             throw new Exception("The plugin $pluginName was not installed correctly", 500);
         }
     }
 
-    public static function generateYMLFile(string $wordpressPath): void {
+    public static function generateYMLFile(string $wordpressPath): void
+    {
         $content = <<<YAML
 apache_modules:
     - mod_rewrite

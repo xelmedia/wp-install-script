@@ -1,22 +1,41 @@
 pipeline {
     agent { label 'docker-in-docker' }
     stages {
-        stage('TA') {
+        stage ('Test and report') {
             when { anyOf { branch 'master'; branch 'dev'; changeRequest() } }
             steps {
-                script {
-                    checkout scm
-                    slackSend (
-                            channel: "#jenkinsbuilds",
-                            color: '#4287f5',
-                            message: """*Started:* - Job ${env.JOB_NAME} build ${env.BUILD_NUMBER} \n More info at: <${env.BUILD_URL} | *Here* >"""
+                loginDockerGitlab()
+                checkout scm
+                // Build test image to run php/composer CLI commands in for building and testing
+                sh """docker build -t zilch-wp-install-script:php-test -f scripts/docker/php-test.Dockerfile ."""
+                // Unit test, lint and build
+                sh """docker run --name zilch-wp-install-script-${env.KAMELEON_PIPELINE_TAG} zilch-wp-install-script:php-test /bin/sh -c "cd /var/www/html && resources/composer install && resources/composer test && resources/composer lint-report && resources/composer build" """
+                // Copy build executable (.phar) from container so it can be used by `ta.sh` script
+                sh """docker cp zilch-wp-install-script-${env.KAMELEON_PIPELINE_TAG}:/var/www/html/zilch-wordpress-install-script.phar ./ """
+                // Run ta
+                sh """chmod +x tests/ta/ta.sh && cd tests/ta && ./ta.sh"""
+            }
+            post {
+                always {
+                    sh """ mkdir -p ./reports """
+                    sh """ docker cp zilch-wp-install-script-${env.KAMELEON_PIPELINE_TAG}:/var/www/html/reports ./ """
+                    sh """ ls -all ./reports"""
+
+                    clover(cloverReportDir: '', cloverReportFileName: './reports/clover.xml',
+                            // optional, default is: method=70, conditional=80, statement=80
+                            healthyTarget: [methodCoverage: 70, conditionalCoverage: 80, statementCoverage: 80],
+                            // optional, default is none
+                            unhealthyTarget: [methodCoverage: 50, conditionalCoverage: 50, statementCoverage: 50],
+                            // optional, default is none
+                            failingTarget: [methodCoverage: 0, conditionalCoverage: 0, statementCoverage: 0]
                     )
-                    sh """chmod +x tests/ta/ta.sh && cd tests/ta && ./ta.sh"""
+
+                    publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: './reports/coverage', reportFiles: '', reportName: 'PHP Code Coverage', reportTitles: ''])
                 }
             }
         }
         stage('Create release tag') {
-            when { anyOf { branch 'dev' } }
+            when { anyOf { branch 'master' } }
             steps {
                 checkout scm
                 script {
@@ -39,9 +58,12 @@ pipeline {
         stage('Create phar file') {
             when { anyOf { branch 'master' } }
             steps {
+                loginDockerGitlab()
                 checkout scm
                 script {
-                    sh "./vendor/bin/box compile"
+                    sh """docker build -t zilch-wp-install-script:php-release -f scripts/docker/php-test.Dockerfile ."""
+                    sh """docker run --name zilch-wp-install-script-${env.KAMELEON_PIPELINE_TAG} zilch-wp-install-script:php-test /bin/sh -c "cd /var/www/html && resources/composer install --no-dev && resources/composer build" """
+                    sh """docker cp zilch-wp-install-script-${env.KAMELEON_PIPELINE_TAG}:/var/www/html/zilch-wordpress-install-script.phar ./ """
                     commitNewPhar()
                 }
             }

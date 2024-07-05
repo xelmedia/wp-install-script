@@ -8,7 +8,8 @@ use Error;
 use Exception;
 use Throwable;
 
-class WpInstallService {
+class WpInstallService
+{
 
     private const WORDPRESS_VERSION =  '6.5.2';
     private string $documentRoot;
@@ -21,7 +22,8 @@ class WpInstallService {
     private WPCommandService $wpCommandService;
     private Auth0Service $auth0Service;
     private GatewayService $gatewayService;
-    public function __construct(string $documentRoot, string $runLevel) {
+    public function __construct(string $documentRoot, string $runLevel)
+    {
         $this->documentRoot = $documentRoot;
         $this->pharFileDirectory = "$documentRoot/WPResources";
         $this->pharFilePath = "$this->pharFileDirectory/wp-cli.phar";
@@ -44,11 +46,12 @@ class WpInstallService {
      * @param $projectId
      * @return void
      */
-    public function installWpScripts($domainName, $projectName, $projectId): void {
+    public function installWpScripts($domainName, $projectName, $projectId): void
+    {
         try {
             ob_start();
             WpInstallHelper::validatePHPVersion();
-            if(FileHelper::pathExists($this->wordpressPath)) {
+            if (FileHelper::pathExists($this->wordpressPath)) {
                 $error = new Error("The cms directory already exists", 400);
                 WpInstallHelper::generateResponse($error);
             }
@@ -56,7 +59,8 @@ class WpInstallService {
             $this->wpCommandService->executeCoreDownload(self::WORDPRESS_VERSION);
             $this->wpCommandService->executeCreateWpConfig($this->dbEnvFilePath);
             $this->wpCommandService->executeWpCoreInstall($domainName, $projectName);
-            $this->wpCommandService->executeWpLanguageCommands();;
+            $this->wpCommandService->executeWpLanguageCommands();
+            ;
             $this->wpCommandService->installPlugins();
             $this->auth0Service->configureAuth0();
             $this->auth0Service->addZilchOptions();
@@ -72,20 +76,21 @@ class WpInstallService {
         // Do not cleanup if only deploying fails.
         try {
             $this->gatewayService->deployManifest($projectId, $domainName);
-        } catch(Throwable $t) {
+        } catch (Throwable $t) {
             // Installation is succes, but deploying failed. Report/log as error, but not as error response.
         }
         $this->cleanUpScript();
         WpInstallHelper::generateResponse();
     }
 
-    private function cleanUpScript($removeWordPress = false): void {
+    private function cleanUpScript($removeWordPress = false): void
+    {
         FileHelper::removeFile($this->dbEnvFilePath);
         FileHelper::removeDir($this->pharFileDirectory);
         FileHelper::removeFile(__FILE__);
         FileHelper::removeFile("$this->wordpressPath/wp-cli.yml");
         FileHelper::removeFile($this->auth0EnvFilePath);
-        if($removeWordPress) {
+        if ($removeWordPress) {
             FileHelper::removeDir($this->wordpressPath);
             FileHelper::removeFile("$this->documentRoot/.htaccess");
         }

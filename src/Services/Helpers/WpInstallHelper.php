@@ -8,8 +8,10 @@ use Error;
 use Exception;
 use Throwable;
 
-class WpInstallHelper {
-    public static function validatePHPVersion() {
+class WpInstallHelper
+{
+    public static function validatePHPVersion()
+    {
         if (version_compare(PHP_VERSION, '8.1', '<')) {
             throw new Exception('PHP version 8.1 or higher is required.');
         }
@@ -21,7 +23,8 @@ class WpInstallHelper {
      * @param Error|Exception|Throwable|null $error
      * @return void
      */
-    public static function generateResponse(Error|Exception|Throwable $error = null): void {
+    public static function generateResponse(Error|Exception|Throwable $error = null): void
+    {
         $data = ["responseCode" => 200];
         if ($error) {
             $data = [
@@ -35,7 +38,7 @@ class WpInstallHelper {
         ob_clean();
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode($data) . "\n";
-        if($error) {
+        if ($error) {
             exit($error->getCode());
         }
     }

@@ -1,2 +1,10 @@
 vendor
 .idea
+reports
+*.cache
+
+tests/ta/node_modules
+tests/ta/.db.env
+tests/ta/package.json
+tests/ta/yarn.lockcghooks.lock
+

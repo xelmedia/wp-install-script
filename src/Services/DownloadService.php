@@ -6,18 +6,21 @@ use App\Services\Helpers\FileHelper;
 use Exception;
 use Throwable;
 
-class DownloadService {
+class DownloadService
+{
 
     /**
      * Downloads a wp-cli.phar files that will help executing wordpress commands
      * @throws Exception
      */
-    public function downloadPharFile(string $pharFilePath, string $pharFileDirectory): void {
+    public function downloadPharFile(string $pharFilePath, string $pharFileDirectory): void
+    {
         $downloadUrl = "https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar";
         $this->downloadFile($downloadUrl, $pharFilePath, $pharFileDirectory);
     }
 
-    public function downloadComposerPharFile(string $composerFilePath, string $composerFileDirectory): void {
+    public function downloadComposerPharFile(string $composerFilePath, string $composerFileDirectory): void
+    {
         $composerUrl = "https://getcomposer.org/composer.phar";
         $this->downloadFile($composerUrl, $composerFilePath, $composerFileDirectory);
     }
@@ -31,7 +34,8 @@ class DownloadService {
      * @return void
      * @throws Exception
      */
-    private function downloadFile(string $url, string $filePath, string $dirPath): void {
+    private function downloadFile(string $url, string $filePath, string $dirPath): void
+    {
         try {
             FileHelper::createDir($dirPath);
             $content = file_get_contents($url);

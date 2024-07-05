@@ -7,7 +7,8 @@ use App\Services\Helpers\CommandExecutor;
 use App\Services\Helpers\FileHelper;
 use Exception;
 
-class Auth0Service {
+class Auth0Service
+{
 
     private WPCommandService $commandExecutorService;
     private string $auth0EnvFilePath;
@@ -15,7 +16,8 @@ class Auth0Service {
     private DownloadService $downloadService;
     private CommandExecutor $cmdExec;
 
-    public function __construct(WPCommandService $commandExecutorService, string $auth0EnvFilePath, string $wordpressPath, ?DownloadService $downloadService = null) {
+    public function __construct(WPCommandService $commandExecutorService, string $auth0EnvFilePath, string $wordpressPath, ?DownloadService $downloadService = null)
+    {
         $this->commandExecutorService = $commandExecutorService;
         $this->auth0EnvFilePath = $auth0EnvFilePath;
         $this->wordpressPath = $wordpressPath;
@@ -28,12 +30,13 @@ class Auth0Service {
      * Saves some default auth0 config to the database
      * @throws Exception
      */
-    public function configureAuth0(): void {
+    public function configureAuth0(): void
+    {
         $this->installAuth0Plugin();
         $this->commandExecutorService->executeWPCommand("plugin activate auth0");
         $this->commandExecutorService->validatePluginIsInstalled("auth0");
         $options = $this->getDefaultAuth0Config();
-        foreach($options as $option_name => $option_value) {
+        foreach ($options as $option_name => $option_value) {
             $current_value = $this->commandExecutorService->getOption($option_name);
             // If option doesn't exist or is different, update it
             if ($current_value === null || count(array_diff_assoc($option_value, $current_value)) > 0) {
@@ -46,7 +49,8 @@ class Auth0Service {
      * It Add/Update the zilch options to the wp options db table
      * @throws Exception
      */
-    public function addZilchOptions(): void {
+    public function addZilchOptions(): void
+    {
         $authOptions = FileHelper::readEnvFile($this->auth0EnvFilePath);
         $options = [
             "zilch_client_secret" => $authOptions["ZILCH_AUTH0_CLIENT_SECRET"],
@@ -54,7 +58,7 @@ class Auth0Service {
         ];
         foreach ($options as $option_name => $option_value) {
             $currentValue = $this->commandExecutorService->getOption($option_name, false);
-            if($currentValue !== $option_value) {
+            if ($currentValue !== $option_value) {
                 $command = "option update $option_name ". escapeshellarg($option_value);
                 $this->commandExecutorService->executeWPCommand($command, "Something went wrong while adding zilch options");
             }
@@ -66,7 +70,8 @@ class Auth0Service {
      * The necessary credentials to do the login request
      * @return array
      */
-    private function getDefaultAuth0Config(): array {
+    private function getDefaultAuth0Config(): array
+    {
         $auth0Array = FileHelper::readEnvFile($this->auth0EnvFilePath);
         return array(
             'auth0_state' => array(
@@ -105,7 +110,8 @@ class Auth0Service {
      * so we need to install it using a composer command
      * @return void
      */
-    public function installAuth0Plugin(): void {
+    public function installAuth0Plugin(): void
+    {
         $auth0tmpDir = "$this->wordpressPath/wp-content/plugins/auth0-tmp";
         $auth0Dir = "$this->wordpressPath/wp-content/plugins/auth0";
         $originalDir = getcwd();

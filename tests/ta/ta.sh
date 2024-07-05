@@ -4,6 +4,16 @@ LOCAL=false
 if [ "$1" == "true" ] || [ "$1" == "false" ]; then
     LOCAL=$1
 fi
+
+# Copy the PHAR file to the WordPress environment
+pharFile="../../zilch-wordpress-install-script.phar"
+
+if [ ! -f "$pharFile" ]; then
+    # Print error message in red and exit
+    echo -e "\033[31mError: $pharFile does not exist, generate first using: $ composer build.\033[0m"
+    exit 1
+fi
+
 yarn add @wordpress/scripts @wordpress/env copy-webpack-plugin
 node_modules/.bin/wp-env stop || :
 node_modules/.bin/wp-env clean
@@ -14,18 +24,9 @@ CONTAINER_ID=$(docker ps --filter "name=tests-cli" -q)
 docker exec --user root $CONTAINER_ID bash -c "echo 'phar.readonly = off' >> /usr/local/etc/php/php.ini"
 docker restart $CONTAINER_ID
 sleep 10
-# Copy the PHAR file to the WordPress environment
-pharFile="../../zilch-wordpress-install-script.phar"
+
 NEW_CONTAINER_ID=$(docker ps --filter "name=tests-cli" -q)
 cd ../../ || exit 1
-if [ "$LOCAL" == "true" ]; then
-    composer install -n
-else
-    wget -q https://getcomposer.org/composer.phar
-    php composer.phar install -n
-    rm composer.phar
-fi
-./vendor/bin/box compile
 cd - || exit 1
 docker cp "$pharFile" $NEW_CONTAINER_ID:/var/www/html/zilch-wordpress-install-script.phar
 

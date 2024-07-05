@@ -8,30 +8,26 @@ use App\Services\Helpers\FileHelper;
 use Exception;
 use Throwable;
 
-class WPCommandService {
+class WPCommandService
+{
     private string $phpBin;
     private string $pharFilePath;
     private string $wordpressPath;
-    private const graphqlGutenbergPluginVersion = "0.4.1";
-    private const graphqlPluginVersion = "1.22.0";
-    private const contactForm7Version = "5.9";
+    private const GRAPHQL_GUTENBERG_PLUGIN_VERSION = "0.4.1";
+    private const GRAPHQL_PLUGIN_VERSION = "1.22.0";
+    private const CONTACTFORM_7_VERSION = "5.9";
     private CommandExecutor $cmdExec;
-
-    private const PLUGINS_TO_DELETE = [
-        "hello",
-        "hello dolly",
-        "akismet"
-    ];
 
     private const PLUGINS_TO_INSTALL = [
             'wp-gatsby' => "https://downloads.wordpress.org/plugin/wp-gatsby.zip",
-            'wp-graphql' => "https://downloads.wordpress.org/plugin/wp-graphql.". self::graphqlPluginVersion .".zip",
-            'wp-graphql-gutenberg' => "https://github.com/pristas-peter/wp-graphql-gutenberg/archive/refs/tags/v".self::graphqlGutenbergPluginVersion.".zip",
-            'contact-form-7' => "https://downloads.wordpress.org/plugin/contact-form-7.". self::contactForm7Version .".zip",
+            'wp-graphql' => "https://downloads.wordpress.org/plugin/wp-graphql.". self::GRAPHQL_PLUGIN_VERSION .".zip",
+            'wp-graphql-gutenberg' => "https://github.com/pristas-peter/wp-graphql-gutenberg/archive/refs/tags/v".self::GRAPHQL_GUTENBERG_PLUGIN_VERSION.".zip",
+            'contact-form-7' => "https://downloads.wordpress.org/plugin/contact-form-7.". self::CONTACTFORM_7_VERSION .".zip",
             'zilch-assistant' => 'https://gitlab.xel.nl/albert/kameleon-assistant-plugin-zip/-/raw/latest/zilch-assistant.zip'
         ];
 
-    public function __construct(string $phpBin, string $pharFilePath, string $wordpressPath, ?CommandExecutor $cmdExec = null) {
+    public function __construct(string $phpBin, string $pharFilePath, string $wordpressPath, ?CommandExecutor $cmdExec = null)
+    {
         $this->phpBin = $phpBin;
         $this->pharFilePath = $pharFilePath;
         $this->wordpressPath = $wordpressPath;
@@ -43,7 +39,8 @@ class WPCommandService {
      * Throws an error if the wordpress directory doesnt exists at defined the wordpress path
      * @throws Exception
      */
-    public function executeCoreDownload(string $wordpressVersion): void {
+    public function executeCoreDownload(string $wordpressVersion): void
+    {
         $wpCommand = "$this->phpBin $this->pharFilePath core download --version=" . escapeshellarg($wordpressVersion) . " --path=" . escapeshellarg($this->wordpressPath);
         $this->cmdExec->execOrFail($wpCommand, "The wordpress core was not downloaded successfully");
         if (!FileHelper::pathExists($this->wordpressPath)) {
@@ -54,7 +51,8 @@ class WPCommandService {
     /**
      * @throws Exception
      */
-    public function executeWpReWrite(): void {
+    public function executeWpReWrite(): void
+    {
         $command = "cd $this->wordpressPath && $this->phpBin $this->pharFilePath rewrite structure '/%postname%/' --hard  --path=$this->wordpressPath";
         $this->cmdExec->execOrFail($command, "Something went wrong while executing wp rewrite");
     }
@@ -65,7 +63,8 @@ class WPCommandService {
      * @return void
      * @throws Exception
      */
-    public function executeCreateWpConfig(string $dbEnvFilePath): void {
+    public function executeCreateWpConfig(string $dbEnvFilePath): void
+    {
         $envData = FileHelper::readEnvFile($dbEnvFilePath);
         $command = 'config create --dbname=' . escapeshellarg($envData["DB_NAME"]) . ' --dbuser=' . escapeshellarg($envData["DB_USER"]) . ' --dbpass=' . escapeshellarg($envData["DB_PASS"]) . ' --dbhost=' . escapeshellarg($envData["DB_HOST"] ?? "localhost");
         $this->executeWPCommand($command, "Something went wrong while creating wordpress database config");
@@ -74,12 +73,14 @@ class WPCommandService {
     /**
      * @throws Exception
      */
-    public function executeWpCommand(string $command, string $errorMessage = "", int $errorCode = 500): void {
+    public function executeWpCommand(string $command, string $errorMessage = "", int $errorCode = 500): void
+    {
         $wpCommand = $this->formatWpCommand($command);
         $this->cmdExec->execOrFail($wpCommand, $errorMessage ?? "Something went wrong executing the command: $wpCommand", $errorCode);
     }
 
-    public function formatWpCommand(string $command): string {
+    public function formatWpCommand(string $command): string
+    {
         return "$this->phpBin $this->pharFilePath $command --path=$this->wordpressPath";
     }
 
@@ -91,12 +92,13 @@ class WPCommandService {
      * @param bool $array
      * @return array|string|null
      */
-    public function getOption(string $option_name, $array = true): array|string|null {
+    public function getOption(string $option_name, $array = true): array|string|null
+    {
         $command = $array ? "option get $option_name --format=json" : "option get $option_name";
         $formattedCommand = $this->formatWPCommand($command);
         try {
             $output = $this->cmdExec->exec($formattedCommand, true);
-            if(gettype($output) === "array") {
+            if (gettype($output) === "array") {
                 $array = [];
                 foreach ($output as $element) {
                     $decoded = json_decode($element);
@@ -116,7 +118,8 @@ class WPCommandService {
      * Updates the options in the option table given option name and value
      * @throws Exception
      */
-    public function updateOption(string $option_name, mixed $option_value): void {
+    public function updateOption(string $option_name, mixed $option_value): void
+    {
         $json_value = json_encode($option_value);
         $escaped_value = escapeshellarg($json_value);
         $command = "option update $option_name $escaped_value --format=json --autoload=yes";
@@ -126,7 +129,8 @@ class WPCommandService {
     /**
      * @throws Exception
      */
-    public function validatePluginIsInstalled(string $pluginName): void {
+    public function validatePluginIsInstalled(string $pluginName): void
+    {
         FileHelper::validatePluginIsInstalled($this->wordpressPath, $pluginName);
     }
 
@@ -138,7 +142,8 @@ class WPCommandService {
      * @return void
      * @throws Exception
      */
-    public function executeWpCoreInstall($domainName, $projectName): void {
+    public function executeWpCoreInstall($domainName, $projectName): void
+    {
         $adminEmail = "email@zilch.nl";
         $command = 'core install --url=' . escapeshellarg($domainName) . ' --title=' . escapeshellarg($projectName) . ' --admin_user=zilch-admin ' . '--admin_email=' . escapeshellarg($adminEmail);
         $this->executeWPCommand($command, "Something went wrong while installing wordpress core for the given domain name: $domainName");
@@ -148,7 +153,8 @@ class WPCommandService {
      * installs and activate dutch language to the wp core files
      * @throws Exception
      */
-    public function executeWpLanguageCommands(): void {
+    public function executeWpLanguageCommands(): void
+    {
         $command = 'language core install nl_NL --activate';
         $this->executeWPCommand($command, "Something went wrong while installing and updating the language");
     }
@@ -158,7 +164,8 @@ class WPCommandService {
      * @param String $plugin
      * @throws Exception
      */
-    public function installPlugin(String $plugin): void {
+    public function installPlugin(String $plugin): void
+    {
         $command = 'plugin install ' . escapeshellarg($plugin) . ' --activate';
         $this->executeWPCommand($command, "Something went wrong while installing the plugin: $plugin");
     }
@@ -168,14 +175,16 @@ class WPCommandService {
      * It will throw an error if a plugin was not installed successfully
      * @throws Exception
      */
-    public function installPlugins(): void {
+    public function installPlugins(): void
+    {
         foreach (self::PLUGINS_TO_INSTALL as $pluginName => $pluginSlug) {
             $this->installPlugin($pluginSlug);
             $this->validatePluginIsInstalled($pluginName);
         }
     }
 
-    public function removePlugins(): void {
+    public function removePlugins(): void
+    {
         $pluginsToNotDelete = array_keys(self::PLUGINS_TO_INSTALL);
         $pluginsToNotDelete[] = 'auth0';
         $excludePlugins = join(",", $pluginsToNotDelete);
