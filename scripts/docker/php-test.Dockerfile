@@ -14,4 +14,7 @@ RUN docker-php-ext-install  \
     mbstring
 
 COPY . /var/www/html/
+COPY resources/composer /usr/local/bin/composer
+RUN chmod +x /usr/local/bin/composer
+RUN /usr/local/bin/composer --version
 WORKDIR /var/www/html/
