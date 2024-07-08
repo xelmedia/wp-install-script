@@ -46,6 +46,7 @@ pipeline {
                     getRepoURL()
                     getVersion()
                     getCommitEmail()
+                    getVersion()
                     version = "${VERSION_NUMBER}-rc "
                     echo "${version}"
                     // Push tag!
@@ -108,7 +109,9 @@ def getRepoURL(){
 def getVersion(){
     JSON_TEXT = readFile('composer.json').trim()
     JSON = readJSON text: jsonText
-    VERSION = json.version
+    echo JSON
+    VERSION = JSON.version
+    echo VERSION
     VERSION_TRIM = version.trim()
     VERSION_NUMBER = "${VERSION_TRIM}"
 }
