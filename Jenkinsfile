@@ -8,6 +8,7 @@ pipeline {
         stage ('Test and report') {
             when { anyOf { branch 'master'; branch 'dev'; changeRequest() } }
             steps {
+                slackSendMessage("#2aad72","""*Started:* - Job ${env.JOB_NAME} build ${BUILD_VERSION} \n More info at: <${env.BUILD_URL} | *Here* >""")
                 loginDockerGitlab()
                 checkout scm
                 // Build test image to run php/composer CLI commands in for building and testing
