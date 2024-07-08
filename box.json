@@ -1,0 +1,11 @@
+{
+  "main": "src/main.php",
+  "output": "zilch-wordpress-install-script.phar",
+  "stub": true,
+  "chmod": "0755",
+  "directories": ["src"],
+  "files": ["composer.json"],
+  "compactors": [
+    "KevinGH\\Box\\Compactor\\Php"
+  ]
+}

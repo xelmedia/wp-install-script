@@ -1,30 +1,53 @@
 pipeline {
-    agent { label 'docker-in-docker' }
+    agent { label 'docker-in-docker'}
+    environment {
+        CI_REGISTRY_URL = "gitlab.xel.nl:4567"
+        KAMELEON_PIPELINE_TAG =  "${env.BUILD_NUMBER}"
+    }
     stages {
-        stage('TA') {
+        stage ('Test and report') {
             when { anyOf { branch 'master'; branch 'dev'; changeRequest() } }
             steps {
-                script {
-                    checkout scm
-                    slackSend (
-                            channel: "#jenkinsbuilds",
-                            color: '#4287f5',
-                            message: """*Started:* - Job ${env.JOB_NAME} build ${env.BUILD_NUMBER} \n More info at: <${env.BUILD_URL} | *Here* >"""
+                slackSendMessage("#2aad72","""*Started:* - Job ${env.JOB_NAME} \n More info at: <${env.BUILD_URL} | *Here* >""")
+                loginDockerGitlab()
+                checkout scm
+                // Build test image to run php/composer CLI commands in for building and testing
+                sh """docker build -t zilch-wp-install-script:php-test -f scripts/docker/php-test.Dockerfile ."""
+                // Unit test, lint and build
+                sh """docker run --name zilch-wp-install-script-${env.KAMELEON_PIPELINE_TAG} zilch-wp-install-script:php-test /bin/sh -c "cd /var/www/html && resources/composer install && resources/composer test && resources/composer lint-report && resources/composer build" """
+                // Copy build executable (.phar) from container so it can be used by `ta.sh` script
+                sh """docker cp zilch-wp-install-script-${env.KAMELEON_PIPELINE_TAG}:/var/www/html/zilch-wordpress-install-script.phar ./ """
+                // Run ta
+                sh """chmod +x tests/ta/ta.sh && cd tests/ta && ./ta.sh"""
+            }
+            post {
+                always {
+                    sh """ mkdir -p ./reports """
+                    sh """ docker cp zilch-wp-install-script-${env.KAMELEON_PIPELINE_TAG}:/var/www/html/reports ./ """
+                    sh """ ls -all ./reports"""
+
+                    clover(cloverReportDir: '', cloverReportFileName: './reports/clover.xml',
+                            // optional, default is: method=70, conditional=80, statement=80
+                            healthyTarget: [methodCoverage: 70, conditionalCoverage: 80, statementCoverage: 80],
+                            // optional, default is none
+                            unhealthyTarget: [methodCoverage: 50, conditionalCoverage: 50, statementCoverage: 50],
+                            // optional, default is none
+                            failingTarget: [methodCoverage: 0, conditionalCoverage: 0, statementCoverage: 0]
                     )
-                    sh """chmod +x tests/ta/ta.sh && cd tests/ta && ./ta.sh"""
+
+                    publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: './reports/coverage', reportFiles: '', reportName: 'PHP Code Coverage', reportTitles: ''])
                 }
             }
         }
         stage('Create release tag') {
-            when { anyOf { branch 'dev' } }
+            when { anyOf { branch 'master' } }
             steps {
                 checkout scm
                 script {
                     getRepoURL()
                     getVersion()
                     getCommitEmail()
-                    version = "${VERSION_NUMBER}-rc "
-                    echo "${version}"
+                    version = "${VERSION_NUMBER}"
                     // Push tag!
                     withCredentials([string(credentialsId: 'GITLAB_OAUTH_TOKEN', variable: 'OAUTH_API')]) {
                         sh """git remote set-url origin https://oauth2:${OAUTH_API}@${repositoryUrl}"""
@@ -36,12 +59,25 @@ pipeline {
                 }
             }
         }
+        stage('Create phar file') {
+            when { anyOf { branch 'master' } }
+            steps {
+                loginDockerGitlab()
+                checkout scm
+                script {
+                    sh """docker build -t zilch-wp-install-script:php-release -f scripts/docker/php-test.Dockerfile ."""
+                    sh """docker run --name zilch-wp-install-script-${env.KAMELEON_PIPELINE_TAG} zilch-wp-install-script:php-test /bin/sh -c "cd /var/www/html && resources/composer install --no-dev && resources/composer build" """
+                    sh """docker cp zilch-wp-install-script-${env.KAMELEON_PIPELINE_TAG}:/var/www/html/zilch-wordpress-install-script.phar ./ """
+                    commitNewPhar()
+                }
+            }
+        }
     }
     post {
         success{
             script {
-                if (env.BRANCH_NAME == 'dev') {
-                    slackSendMessage("#2aad72","*${currentBuild.currentResult}:* - *Job* ${env.JOB_NAME} build ${env.BUILD_NUMBER} \n *Duration*: ${currentBuild.durationString.minus(' and counting')} \n Release tag version: *${VERSION_NUMBER}-rc* \n More info at: <${env.BUILD_URL} | *Here* >")
+                if (env.BRANCH_NAME == 'master') {
+                    slackSendMessage("#2aad72","*${currentBuild.currentResult}:* - *Job* ${env.JOB_NAME} build ${env.BUILD_NUMBER} \n *Duration*: ${currentBuild.durationString.minus(' and counting')} \n Release tag version: *${VERSION_NUMBER}* \n More info at: <${env.BUILD_URL} | *Here* >")
                 } else {
                     slackSendMessage("#2aad72","*${currentBuild.currentResult}:* - *Job* ${env.JOB_NAME} build ${env.BUILD_NUMBER} \n *Duration*: ${currentBuild.durationString.minus(' and counting')} \n More info at: <${env.BUILD_URL} | *Here* >")
                 }
@@ -70,10 +106,14 @@ def getRepoURL(){
 }
 
 def getVersion(){
-    version = sh returnStdout: true, script: """(egrep -o "([0-9]{1,}\\.)+[0-9]{1,}" version.properties)"""
-    VERSION_TRIM = version.trim()
+    JSON_TEXT = readFile('composer.json').trim()
+    JSON = readJSON text: JSON_TEXT
+    VERSION = JSON.version
+    VERSION_TRIM = VERSION.trim()
     VERSION_NUMBER = "${VERSION_TRIM}"
+    return VERSION_NUMBER
 }
+
 def slackSendMessage(color, message){
     slackSend (
             channel: "#jenkinsbuilds",
@@ -82,3 +122,28 @@ def slackSendMessage(color, message){
     )
 }
 
+def loginGitlab() {
+    getRepoURL()
+    getCommitEmail()
+    // Push tag!
+    withCredentials([string(credentialsId: 'GITLAB_OAUTH_TOKEN', variable: 'OAUTH_API')]) {
+        sh """git remote set-url origin https://oauth2:${OAUTH_API}@${repositoryUrl}"""
+    }
+    sh """git config --global user.name \"Docker agent (using Jenkins)\" """
+    sh """git config --global user.email ${committerEmail} && echo \"Setting ${committerEmail} as Tag committer\"  """
+}
+
+
+def commitNewPhar() {
+    loginGitlab()
+    sh """git checkout master"""
+    sh 'git add zilch-wordpress-install-script.phar'
+    sh """git commit --no-verify -m \"Committing the new generated phar file [skip ci]\" """
+    sh 'git push origin master'
+}
+
+def loginDockerGitlab() {
+    withCredentials([string(credentialsId: 'GITLAB_DOCKER_REGISTRY_USER_PW', variable: 'GITLAB_PASS')]) {
+        sh """ echo '$GITLAB_PASS' |  docker login -u "kameleon_docker_registry" --password-stdin "${env.CI_REGISTRY_URL}" """
+    }
+}
