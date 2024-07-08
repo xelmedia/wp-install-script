@@ -39,14 +39,13 @@ pipeline {
             }
         }
         stage('Create release tag') {
-            when { anyOf { branch 'master' } }
+            when { anyOf { branch 'dev' } }
             steps {
                 checkout scm
                 script {
                     getRepoURL()
                     getVersion()
                     getCommitEmail()
-                    getVersion()
                     version = "${VERSION_NUMBER}-rc "
                     echo "${version}"
                     // Push tag!
