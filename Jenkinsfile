@@ -6,7 +6,7 @@ pipeline {
     }
     stages {
         stage ('Test and report') {
-            when { anyOf { branch 'master'; branch 'dev'; changeRequest() } }
+            when { anyOf { branch 'master' } }
             steps {
                 loginDockerGitlab()
                 checkout scm
@@ -46,7 +46,7 @@ pipeline {
                     getRepoURL()
                     getVersion()
                     getCommitEmail()
-                    version = "${VERSION_NUMBER}-rc "
+                    version = "${VERSION_NUMBER}"
                     echo "${version}"
                     // Push tag!
                     withCredentials([string(credentialsId: 'GITLAB_OAUTH_TOKEN', variable: 'OAUTH_API')]) {
@@ -107,12 +107,13 @@ def getRepoURL(){
 
 def getVersion(){
     JSON_TEXT = readFile('composer.json').trim()
-    JSON = readJSON text: jsonText
-    echo JSON
+    JSON = readJSON text: JSON_TEXT
+    echo JSON.toString()  // JSON needs to be converted to string for echoing
     VERSION = JSON.version
     echo VERSION
-    VERSION_TRIM = version.trim()
+    VERSION_TRIM = VERSION.trim()
     VERSION_NUMBER = "${VERSION_TRIM}"
+    return VERSION_NUMBER
 }
 def slackSendMessage(color, message){
     slackSend (
