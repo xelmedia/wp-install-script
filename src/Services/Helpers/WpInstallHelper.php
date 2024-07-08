@@ -10,7 +10,13 @@ use Throwable;
 
 class WpInstallHelper
 {
-    public static function validatePHPVersion()
+    private ExitWrapper $exitWrapper;
+
+    public function __construct(?ExitWrapper $exitWrapper = null)
+    {
+        $this->exitWrapper = $exitWrapper ?? new ExitWrapper();
+    }
+    public function validatePHPVersion()
     {
         if (version_compare(PHP_VERSION, '8.1', '<')) {
             throw new Exception('PHP version 8.1 or higher is required.');
@@ -18,12 +24,13 @@ class WpInstallHelper
     }
 
     /**
-     * it will generate a response for the script
-     * returns 200 if $error is null otherwise returns 500 with the given error
+     * It will generate a response for the script.
+     * Returns 200 if $error is null otherwise returns 500 with the given error.
+     *
      * @param Error|Exception|Throwable|null $error
      * @return void
      */
-    public static function generateResponse(Error|Exception|Throwable $error = null): void
+    public function generateResponse(Throwable $error = null): void
     {
         $data = ["responseCode" => 200];
         if ($error) {
@@ -39,7 +46,7 @@ class WpInstallHelper
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode($data) . "\n";
         if ($error) {
-            exit($error->getCode());
+            $this->exitWrapper->exit($error->getCode());
         }
     }
 }

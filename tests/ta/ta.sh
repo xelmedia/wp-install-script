@@ -1,9 +1,4 @@
 #!/usr/bin/env bash
-LOCAL=false
-
-if [ "$1" == "true" ] || [ "$1" == "false" ]; then
-    LOCAL=$1
-fi
 
 # Copy the PHAR file to the WordPress environment
 pharFile="../../zilch-wordpress-install-script.phar"

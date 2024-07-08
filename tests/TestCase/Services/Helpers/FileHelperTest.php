@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Helpers;
 
 use App\TestUtils;
+use phpmock\MockBuilder;
 use PHPUnit\Framework\TestCase;
 use function PHPUnit\Framework\assertEquals;
 use function PHPUnit\Framework\assertTrue;
@@ -76,6 +77,23 @@ class FileHelperTest extends TestCase {
         self::assertEquals($envArray, $result);
     }
 
+    public function testReadEnvFile_WithComment(): void {
+        $envArray = [
+            "key1" => "value1",
+            "key2" => "value2",
+            "key3" => "value3",
+            "# This is " => "A comment"
+        ];
+        TestUtils::createEnvFile($this->testEnvFilePath, $envArray);
+        $result = FileHelper::readEnvFile($this->testEnvFilePath);
+        $expectedArray = [
+            "key1" => "value1",
+            "key2" => "value2",
+            "key3" => "value3"
+        ];
+        self::assertEquals($expectedArray, $result);
+    }
+
     public function testGenerateYMLFile(): void {
         FileHelper::generateYMLFile(__DIR__);
         $expectedContent = <<<YAML
@@ -85,5 +103,39 @@ apache_modules:
 YAML;
         $content = file_get_contents($this->ymlFilePath);
         assertEquals($expectedContent, $content);
+    }
+
+    public function testValidatePluginExists_Exists(): void {
+        $mockIsDir = (new MockBuilder())
+            ->setNamespace("App\Services\Helpers")
+            ->setName("is_dir")
+            ->setFunction(function() {
+                return true;
+            })
+            ->build();
+
+        $mockIsDir->enable();
+        $error = null;
+        try {
+            FileHelper::validatePluginIsInstalled($this->dirPath, "some plugin");
+        } catch (\Throwable $e) {
+            $error = $e;
+        }
+        self::assertNull($error);
+        $mockIsDir->disable();
+    }
+    public function testValidatePluginExists_DoesNotExist(): void {
+        $mockIsDir = (new MockBuilder())
+            ->setNamespace("App\Services\Helpers")
+            ->setName("is_dir")
+            ->setFunction(function() {
+                return false;
+            })
+            ->build();
+
+        $mockIsDir->enable();
+        $this->expectExceptionMessage("The plugin some plugin was not installed correctly");
+        FileHelper::validatePluginIsInstalled($this->dirPath, "some plugin");
+        $mockIsDir->disable();
     }
 }

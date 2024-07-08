@@ -16,13 +16,18 @@ class Auth0Service
     private DownloadService $downloadService;
     private CommandExecutor $cmdExec;
 
-    public function __construct(WPCommandService $commandExecutorService, string $auth0EnvFilePath, string $wordpressPath, ?DownloadService $downloadService = null)
-    {
+    public function __construct(
+        WPCommandService $commandExecutorService,
+        string $auth0EnvFilePath,
+        string $wordpressPath,
+        ?DownloadService $downloadService = null,
+        ?CommandExecutor $commandExecutor = null
+    ) {
         $this->commandExecutorService = $commandExecutorService;
         $this->auth0EnvFilePath = $auth0EnvFilePath;
         $this->wordpressPath = $wordpressPath;
         $this->downloadService = $downloadService ?? new DownloadService();
-        $this->cmdExec = new CommandExecutor();
+        $this->cmdExec = $commandExecutor ?? new CommandExecutor();
     }
 
     /**
@@ -119,7 +124,8 @@ class Auth0Service
         $this->downloadService->downloadComposerPharFile("$auth0tmpDir/composer.phar", $auth0tmpDir);
         chdir($auth0tmpDir);
         // download using composer!
-        $this->cmdExec->exec(PHP_BINARY . " composer.phar require -n symfony/http-client nyholm/psr7 auth0/wordpress:^5.0");
+        $this->cmdExec
+            ->exec(PHP_BINARY . " composer.phar require -n symfony/http-client nyholm/psr7 auth0/wordpress:^5.0");
         chdir($originalDir);
         FileHelper::createDir($auth0Dir);
         // remove the content of the wordpress folder to the auth0 folder (which will be used as a default folder for the plugin)

@@ -82,8 +82,16 @@ class FileHelper
         if (file_exists($path)) {
             $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
             foreach ($lines as $line) {
-                list($key, $value) = explode('=', $line, 2);
-                $envData[trim($key)] = trim($value);
+                $line = trim($line);
+                if ($line === '' || $line[0] === "#") {
+                    continue;
+                }
+                $parts = explode('=', $line, 2);
+                if (count($parts) == 2) {
+                    $key = trim($parts[0]);
+                    $value = trim($parts[1]);
+                    $envData[$key] = $value;
+                }
             }
         }
         return $envData;
