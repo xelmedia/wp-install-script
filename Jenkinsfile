@@ -6,7 +6,7 @@ pipeline {
     }
     stages {
         stage ('Test and report') {
-            when { anyOf { branch 'master' } }
+            when { anyOf { branch 'master'; branch 'dev'; changeRequest() } }
             steps {
                 loginDockerGitlab()
                 checkout scm
@@ -39,7 +39,7 @@ pipeline {
             }
         }
         stage('Create release tag') {
-            when { anyOf { branch 'dev' } }
+            when { anyOf { branch 'master' } }
             steps {
                 checkout scm
                 script {
@@ -47,7 +47,6 @@ pipeline {
                     getVersion()
                     getCommitEmail()
                     version = "${VERSION_NUMBER}"
-                    echo "${version}"
                     // Push tag!
                     withCredentials([string(credentialsId: 'GITLAB_OAUTH_TOKEN', variable: 'OAUTH_API')]) {
                         sh """git remote set-url origin https://oauth2:${OAUTH_API}@${repositoryUrl}"""
@@ -76,8 +75,8 @@ pipeline {
     post {
         success{
             script {
-                if (env.BRANCH_NAME == 'dev') {
-                    slackSendMessage("#2aad72","*${currentBuild.currentResult}:* - *Job* ${env.JOB_NAME} build ${env.BUILD_NUMBER} \n *Duration*: ${currentBuild.durationString.minus(' and counting')} \n Release tag version: *${VERSION_NUMBER}-rc* \n More info at: <${env.BUILD_URL} | *Here* >")
+                if (env.BRANCH_NAME == 'master') {
+                    slackSendMessage("#2aad72","*${currentBuild.currentResult}:* - *Job* ${env.JOB_NAME} build ${env.BUILD_NUMBER} \n *Duration*: ${currentBuild.durationString.minus(' and counting')} \n Release tag version: *${VERSION_NUMBER}* \n More info at: <${env.BUILD_URL} | *Here* >")
                 } else {
                     slackSendMessage("#2aad72","*${currentBuild.currentResult}:* - *Job* ${env.JOB_NAME} build ${env.BUILD_NUMBER} \n *Duration*: ${currentBuild.durationString.minus(' and counting')} \n More info at: <${env.BUILD_URL} | *Here* >")
                 }
@@ -108,13 +107,12 @@ def getRepoURL(){
 def getVersion(){
     JSON_TEXT = readFile('composer.json').trim()
     JSON = readJSON text: JSON_TEXT
-    echo JSON.toString()  // JSON needs to be converted to string for echoing
     VERSION = JSON.version
-    echo VERSION
     VERSION_TRIM = VERSION.trim()
     VERSION_NUMBER = "${VERSION_TRIM}"
     return VERSION_NUMBER
 }
+
 def slackSendMessage(color, message){
     slackSend (
             channel: "#jenkinsbuilds",
