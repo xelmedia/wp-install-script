@@ -39,6 +39,19 @@ pipeline {
                 }
             }
         }
+        stage('Create phar file') {
+            when { anyOf { branch 'master' } }
+            steps {
+                loginDockerGitlab()
+                checkout scm
+                script {
+                    sh """docker build -t zilch-wp-install-script:php-release -f scripts/docker/php-test.Dockerfile ."""
+                    sh """docker run --name zilch-wp-install-script-${env.KAMELEON_PIPELINE_TAG}-phar zilch-wp-install-script:php-test /bin/sh -c "cd /var/www/html && resources/composer install --no-dev && resources/composer build" """
+                    sh """docker cp zilch-wp-install-script-${env.KAMELEON_PIPELINE_TAG}-phar:/var/www/html/zilch-wordpress-install-script.phar ./ """
+                    commitNewPhar()
+                }
+            }
+        }
         stage('Create release tag') {
             when { anyOf { branch 'master' } }
             steps {
@@ -56,19 +69,6 @@ pipeline {
                     sh """git config --global user.email ${committerEmail} && echo \"Setting ${committerEmail} as Tag committer\"  """
                     sh """git tag -m \"Release tag version to ${version}\" -a ${version}  """
                     sh "git push origin ${version}"
-                }
-            }
-        }
-        stage('Create phar file') {
-            when { anyOf { branch 'master' } }
-            steps {
-                loginDockerGitlab()
-                checkout scm
-                script {
-                    sh """docker build -t zilch-wp-install-script:php-release -f scripts/docker/php-test.Dockerfile ."""
-                    sh """docker run --name zilch-wp-install-script-${env.KAMELEON_PIPELINE_TAG}-phar zilch-wp-install-script:php-test /bin/sh -c "cd /var/www/html && resources/composer install --no-dev && resources/composer build" """
-                    sh """docker cp zilch-wp-install-script-${env.KAMELEON_PIPELINE_TAG}-phar:/var/www/html/zilch-wordpress-install-script.phar ./ """
-                    commitNewPhar()
                 }
             }
         }
