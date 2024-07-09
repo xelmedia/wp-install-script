@@ -39,19 +39,6 @@ pipeline {
                 }
             }
         }
-        stage('Create phar file') {
-            when { anyOf { branch 'master' } }
-            steps {
-                loginDockerGitlab()
-                checkout scm
-                script {
-                    sh """docker build -t zilch-wp-install-script:php-release -f scripts/docker/php-test.Dockerfile ."""
-                    sh """docker run --name zilch-wp-install-script-${env.KAMELEON_PIPELINE_TAG}-phar zilch-wp-install-script:php-release /bin/sh -c "cd /var/www/html && resources/composer install && resources/composer build" """
-                    sh """docker cp zilch-wp-install-script-${env.KAMELEON_PIPELINE_TAG}-phar:/var/www/html/zilch-wordpress-install-script.phar ./ """
-                    commitNewPhar()
-                }
-            }
-        }
         stage('Create release tag') {
             when { anyOf { branch 'master' } }
             steps {
@@ -65,6 +52,14 @@ pipeline {
                     withCredentials([string(credentialsId: 'GITLAB_OAUTH_TOKEN', variable: 'OAUTH_API')]) {
                         sh """git remote set-url origin https://oauth2:${OAUTH_API}@${repositoryUrl}"""
                     }
+                    // Create phar to be appended to the tag
+                    sh """docker build -t zilch-wp-install-script:php-release -f scripts/docker/php-test.Dockerfile ."""
+                    sh """docker run --name zilch-wp-install-script-${env.KAMELEON_PIPELINE_TAG}-phar zilch-wp-install-script:php-release /bin/sh -c "cd /var/www/html && resources/composer install && resources/composer build" """
+                    sh """docker cp zilch-wp-install-script-${env.KAMELEON_PIPELINE_TAG}-phar:/var/www/html/zilch-wordpress-install-script.phar ./ """
+                    sh """git add zilch-wordpress-install-script.phar"""
+                    sh """git commit --no-verify -m \"Committing the new generated phar file [skip ci]\" """
+
+                    // Create tag using current master branch code base + appended .phar file
                     sh """git config --global user.name \"Docker agent (using Jenkins)\" """
                     sh """git config --global user.email ${committerEmail} && echo \"Setting ${committerEmail} as Tag committer\"  """
                     sh """git tag -m \"Release tag version to ${version}\" -a ${version}  """
@@ -120,26 +115,6 @@ def slackSendMessage(color, message){
             color: """$color""",
             message: """$message"""
     )
-}
-
-def loginGitlab() {
-    getRepoURL()
-    getCommitEmail()
-    // Push tag!
-    withCredentials([string(credentialsId: 'GITLAB_OAUTH_TOKEN', variable: 'OAUTH_API')]) {
-        sh """git remote set-url origin https://oauth2:${OAUTH_API}@${repositoryUrl}"""
-    }
-    sh """git config --global user.name \"Docker agent (using Jenkins)\" """
-    sh """git config --global user.email ${committerEmail} && echo \"Setting ${committerEmail} as Tag committer\"  """
-}
-
-
-def commitNewPhar() {
-    loginGitlab()
-    sh """git checkout master"""
-    sh 'git add zilch-wordpress-install-script.phar'
-    sh """git commit --no-verify -m \"Committing the new generated phar file [skip ci]\" """
-    sh 'git push origin master'
 }
 
 def loginDockerGitlab() {
