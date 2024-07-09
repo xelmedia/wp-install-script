@@ -6,7 +6,7 @@ pipeline {
     }
     stages {
         stage ('Test and report') {
-            when { anyOf { branch 'master'; branch 'dev'; changeRequest() } }
+            when { anyOf { branch 'dev'; changeRequest() } }
             steps {
                 slackSendMessage("#2aad72","""*Started:* - Job ${env.JOB_NAME} \n More info at: <${env.BUILD_URL} | *Here* >""")
                 loginDockerGitlab()
@@ -46,7 +46,7 @@ pipeline {
                 checkout scm
                 script {
                     sh """docker build -t zilch-wp-install-script:php-release -f scripts/docker/php-test.Dockerfile ."""
-                    sh """docker run --name zilch-wp-install-script-${env.KAMELEON_PIPELINE_TAG}-phar zilch-wp-install-script:php-release /bin/sh -c "cd /var/www/html && resources/composer install --no-dev && resources/composer build" """
+                    sh """docker run --name zilch-wp-install-script-${env.KAMELEON_PIPELINE_TAG}-phar zilch-wp-install-script:php-release /bin/sh -c "cd /var/www/html && resources/composer install && resources/composer build" """
                     sh """docker cp zilch-wp-install-script-${env.KAMELEON_PIPELINE_TAG}-phar:/var/www/html/zilch-wordpress-install-script.phar ./ """
                     commitNewPhar()
                 }
