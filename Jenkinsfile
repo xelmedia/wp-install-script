@@ -56,12 +56,12 @@ pipeline {
                     sh """docker build -t zilch-wp-install-script:php-release -f scripts/docker/php-test.Dockerfile ."""
                     sh """docker run --name zilch-wp-install-script-${env.KAMELEON_PIPELINE_TAG}-phar zilch-wp-install-script:php-release /bin/sh -c "cd /var/www/html && resources/composer install && resources/composer build" """
                     sh """docker cp zilch-wp-install-script-${env.KAMELEON_PIPELINE_TAG}-phar:/var/www/html/zilch-wordpress-install-script.phar ./ """
+                    sh """git config --global user.name \"Docker agent (using Jenkins)\" """
+                    sh """git config --global user.email ${committerEmail} && echo \"Setting ${committerEmail} as Tag committer\"  """
                     sh """git add zilch-wordpress-install-script.phar"""
                     sh """git commit --no-verify -m \"Committing the new generated phar file [skip ci]\" """
 
                     // Create tag using current master branch code base + appended .phar file
-                    sh """git config --global user.name \"Docker agent (using Jenkins)\" """
-                    sh """git config --global user.email ${committerEmail} && echo \"Setting ${committerEmail} as Tag committer\"  """
                     sh """git tag -m \"Release tag version to ${version}\" -a ${version}  """
                     sh "git push origin ${version}"
                 }
