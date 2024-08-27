@@ -123,7 +123,7 @@ class Auth0ServiceTest extends TestCase
                 $execInvocations += 1;
                 switch ($execInvocations) {
                     case 1:
-                        self::assertEquals(PHP_BINARY . " composer.phar require -n symfony/http-client nyholm/psr7 auth0/wordpress:^5.0", $cmd);
+                        self::assertEquals(PHP_BINARY . " composer.phar require -n symfony/http-client nyholm/psr7 auth0/wordpress:5.x-dev --prefer-source", $cmd);
                         break;
                     case 2:
                         self::assertEquals("mv $auth0tmpDir/vendor/auth0/wordpress/* $auth0Dir", $cmd);
