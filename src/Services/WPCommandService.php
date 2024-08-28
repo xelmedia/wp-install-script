@@ -23,7 +23,7 @@ class WPCommandService
             'wp-graphql' => "https://downloads.wordpress.org/plugin/wp-graphql.". self::GRAPHQL_PLUGIN_VERSION .".zip",
             'wp-graphql-gutenberg' => "https://github.com/pristas-peter/wp-graphql-gutenberg/archive/refs/tags/v".self::GRAPHQL_GUTENBERG_PLUGIN_VERSION.".zip",
             'contact-form-7' => "https://downloads.wordpress.org/plugin/contact-form-7.". self::CONTACTFORM_7_VERSION .".zip",
-            'zilch-assistant' => 'https://gitlab.xel.nl/albert/kameleon-assistant-plugin-zip/-/raw/latest/zilch-assistant.zip'
+            'zilch-assistant' => 'https://gitlab.xel.nl/chameleon/kameleon-assistant-plugin-zip/-/raw/latest/zilch-assistant.zip'
         ];
 
     public function __construct(string $phpBin, string $pharFilePath, string $wordpressPath, ?CommandExecutor $cmdExec = null)
