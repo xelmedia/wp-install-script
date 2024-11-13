@@ -6,7 +6,7 @@ pipeline {
     }
     stages {
         stage ('Test and report') {
-            when { anyOf { branch 'dev'; changeRequest() } }
+            when { anyOf { branch 'master'; branch 'dev'; changeRequest() } }
             steps {
                 slackSendMessage("#2aad72","""*Started:* - Job ${env.JOB_NAME} \n More info at: <${env.BUILD_URL} | *Here* >""")
                 loginDockerGitlab()

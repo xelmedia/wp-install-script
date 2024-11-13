@@ -125,7 +125,7 @@ class Auth0Service
         chdir($auth0tmpDir);
         // download using composer!
         $this->cmdExec
-            ->exec(PHP_BINARY . " composer.phar require -n symfony/http-client nyholm/psr7 auth0/wordpress:^5.0");
+            ->exec(PHP_BINARY . " composer.phar require -n symfony/http-client nyholm/psr7 auth0/wordpress:5.x-dev --prefer-source");
         chdir($originalDir);
         FileHelper::createDir($auth0Dir);
         // remove the content of the wordpress folder to the auth0 folder (which will be used as a default folder for the plugin)
