@@ -23,7 +23,6 @@ class WpInstallService
     private DownloadService $downloadService;
     private WPCommandService $wpCommandService;
     private Auth0Service $auth0Service;
-    private GatewayService $gatewayService;
     private WpInstallHelper $wpInstallHelper;
     public function __construct(
         string $documentRoot,
@@ -31,7 +30,6 @@ class WpInstallService
         ?DownloadService $downloadService = null,
         ?WPCommandService $wpCommandService = null,
         ?Auth0Service $auth0Service = null,
-        ?GatewayService $gatewayService = null,
         ?WpInstallHelper $wpInstallHelper = null
     ) {
         $this->documentRoot = $documentRoot;
@@ -46,7 +44,6 @@ class WpInstallService
             ?? new WPCommandService(PHP_BINARY, $this->pharFilePath, $this->wordpressPath);
         $this->auth0Service = $auth0Service
             ?? new Auth0Service($this->wpCommandService, $this->auth0EnvFilePath, $this->wordpressPath);
-        $this->gatewayService = $gatewayService ?? new GatewayService($this->auth0EnvFilePath, $runLevel);
         $this->wpInstallHelper = $wpInstallHelper ?? new WpInstallHelper();
     }
     /**
@@ -57,10 +54,9 @@ class WpInstallService
      * wordpress folder, env file, WPResources directory and the script itself
      * @param $domainName
      * @param $projectName
-     * @param $projectId
      * @return void
      */
-    public function installWpScripts($domainName, $projectName, $projectId): void
+    public function installWpScripts($domainName, $projectName): void
     {
         try {
             ob_start();
@@ -86,13 +82,6 @@ class WpInstallService
             $this->cleanUpScript(true);
             $this->wpInstallHelper->generateResponse($e);
             return;
-        }
-
-        // Do not cleanup if only deploying fails.
-        try {
-            $this->gatewayService->deployManifest($projectId, $domainName);
-        } catch (Throwable $t) {
-            // Installation is succes, but deploying failed. Report/log as error, but not as error response.
         }
         $this->cleanUpScript();
         $this->wpInstallHelper->generateResponse();

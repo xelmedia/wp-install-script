@@ -16,7 +16,6 @@ class WpInstallServiceTest extends TestCase
     private DownloadService|MockObject $downloadService;
     private WPCommandService|MockObject $wpCommandService;
     private Auth0Service|MockObject $auth0Service;
-    private GatewayService|MockObject $gatewayService;
     private WpInstallHelper|MockObject $wpInstallHelper;
 
     private WpInstallService $wpInstallService;
@@ -27,7 +26,6 @@ class WpInstallServiceTest extends TestCase
         $this->downloadService = $this->createMock(DownloadService::class);
         $this->wpCommandService = $this->createMock(WPCommandService::class);
         $this->auth0Service = $this->createMock(Auth0Service::class);
-        $this->gatewayService = $this->createMock(GatewayService::class);
         $this->wpInstallHelper = $this->createMock(WpInstallHelper::class);
         $this->runLevel = "testing";
         $this->documentRoot = __DIR__;
@@ -37,7 +35,6 @@ class WpInstallServiceTest extends TestCase
             $this->downloadService,
             $this->wpCommandService,
             $this->auth0Service,
-            $this->gatewayService,
             $this->wpInstallHelper
         );
     }
@@ -116,10 +113,6 @@ class WpInstallServiceTest extends TestCase
         $this->wpCommandService->expects(self::once())
             ->method("removePlugins");
 
-        $this->gatewayService->expects(self::once())
-            ->method("deployManifest")
-            ->with("i", "d");
-
         ob_start();
         $this->wpInstallService->installWpScripts("d", "p", "i");
         ob_end_flush();
@@ -144,33 +137,6 @@ class WpInstallServiceTest extends TestCase
             ->method("downloadPharFile")
             ->with("$this->documentRoot/WPResources/wp-cli.phar", "$this->documentRoot/WPResources")
             ->willThrowException(new Error("Wrong url", 500));
-
-        $this->gatewayService->expects(self::never())
-            ->method("deployManifest");
-
-        ob_start();
-        $this->wpInstallService->installWpScripts("d", "p", "i");
-        ob_end_flush();
-        ob_get_clean();
-    }
-
-    public function testInstallWpScripts_deployManifestThrowsError()
-    {
-        $this->wpInstallHelper->expects(self::once())
-            ->method("validatePHPVersion");
-
-        $mockFileExists = (new MockBuilder())
-            ->setNamespace("App\Services\Helpers")
-            ->setName("file_exists")
-            ->setFunction(function () {
-                return false;
-            })
-            ->build();
-        $mockFileExists->enable();
-
-        $this->gatewayService->expects(self::once())
-            ->method("deployManifest")
-            ->willThrowException(new Error("Deploying went wrong", 500));
 
         ob_start();
         $this->wpInstallService->installWpScripts("d", "p", "i");
