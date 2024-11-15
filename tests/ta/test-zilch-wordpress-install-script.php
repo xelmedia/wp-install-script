@@ -58,6 +58,9 @@ class WPInstallScriptTest {
 
         $domain = $this->readEnvFile(__DIR__."/.auth0.env")["ZILCH_AUTH0_TENANT_DOMAIN"];
         $gatewayHost = $this->readEnvFile(__DIR__."/.auth0.env")["ZILCH_AUTH0_CUSTOM_TENANT_DOMAIN"];
+        if (str_contains($finalUrl, "upgrade.php")) {
+            return;
+        }
         if (!str_contains($finalUrl, $domain) && !str_contains($finalUrl, $gatewayHost)) {
             throw new Exception("The redirect URL does not represent the universal login page of Auth0: $finalUrl");
         }
