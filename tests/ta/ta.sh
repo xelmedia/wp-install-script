@@ -54,7 +54,7 @@ node_modules/.bin/wp-env run tests-cli chmod +x /var/www/html/cleanup.sh
 
 # Run the cleanup script and the PHAR file
 node_modules/.bin/wp-env run tests-cli /var/www/html/cleanup.sh
-node_modules/.bin/wp-env run tests-cli php /var/www/html/zilch-wordpress-install-script.phar -p p -i id -d d
+node_modules/.bin/wp-env run tests-cli php /var/www/html/zilch-wordpress-install-script.phar -p p -d d
 
 # Run the test script
 php test-zilch-wordpress-install-script.php
