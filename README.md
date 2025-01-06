@@ -2,7 +2,6 @@
 
 This project automates the process of installing WordPress on client sites. It's designed to streamline the setup by handling WordPress core download, configuration, plugin installation, and more through an efficient, automated script.
 The expectation is that the `zilch-wordpress-install-script.phar` will be generated using the `box` library. It gathers the classes inside the source folder and will make it one executable file.
-Together with the `.htaccess` file, they will be placed in the document root and executed.
 
 ## WPInstallScript
 
@@ -36,7 +35,6 @@ DB_NAME=
 DB_PASS=
 DB_USER=
 ```
-4. The .htaccess file must be in place
 
 ### Execute the Script
 To execute the script, use the following commands in your terminal:
@@ -52,24 +50,10 @@ For the test automation, we use `wp-env` to start a Docker container with WordPr
 1. Change the `php.ini` of the container so the executable PHAR file can write on the container.
 2. Compile a new PHAR file using Box.
 3. Move the PHAR file into the container.
-4. Create the needed files (`.htaccess`, `auth0.env`, and `db.env`).
+4. Create the needed files (`db.env`).
 5. Execute a cleanup script to remove the installed WordPress.
 6. Execute the PHAR file.
 7. Perform assertions to check the installation.
 
 ### Plugins
-To ensure that WordPress is installed correctly, we install some helpful plugins:
-1. Zilch Assistant plugin
-2. Auth0
-3. WP Gatsby
-4. WP GraphQL
-5. WP GraphQL Gutenberg
-
-### Installing Auth0
-We do not use the WordPress command line to install this plugin because version 5.x.x is not published on the WordPress store yet. So, we have to do some workarounds to install it:
-1. Download `Composer.phar`.
-2. Use the Composer command to download the required files.
-3. Move a specific WordPress directory from inside the `vendor` folder into a new folder located at `wp-content/plugin/auth0`.
-4. Execute a `composer install` command to install the needed dependencies.
-5. Activate the Auth0 plugin using the WordPress CLI.
-6. Use the `auth0.env` file to create a default config dump for the plugin.
+To ensure that WordPress is installed correctly, we will install the `Zilch Assistant plugin`

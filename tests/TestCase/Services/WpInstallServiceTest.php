@@ -15,7 +15,6 @@ class WpInstallServiceTest extends TestCase
     private string $runLevel;
     private DownloadService|MockObject $downloadService;
     private WPCommandService|MockObject $wpCommandService;
-    private Auth0Service|MockObject $auth0Service;
     private WpInstallHelper|MockObject $wpInstallHelper;
 
     private WpInstallService $wpInstallService;
@@ -25,7 +24,6 @@ class WpInstallServiceTest extends TestCase
         Mock::disableAll();
         $this->downloadService = $this->createMock(DownloadService::class);
         $this->wpCommandService = $this->createMock(WPCommandService::class);
-        $this->auth0Service = $this->createMock(Auth0Service::class);
         $this->wpInstallHelper = $this->createMock(WpInstallHelper::class);
         $this->runLevel = "testing";
         $this->documentRoot = __DIR__;
@@ -34,14 +32,12 @@ class WpInstallServiceTest extends TestCase
             $this->runLevel,
             $this->downloadService,
             $this->wpCommandService,
-            $this->auth0Service,
-            $this->wpInstallHelper
         );
     }
 
     protected function tearDown(): void
     {
-        rmdir("$this->documentRoot/cms");
+        rmdir("$this->documentRoot");
         Mock::disableAll();
     }
 
@@ -50,7 +46,7 @@ class WpInstallServiceTest extends TestCase
         $this->wpInstallHelper->expects(self::once())
             ->method("validatePHPVersion");
 
-        mkdir("$this->documentRoot/cms");
+        mkdir("$this->documentRoot");
 
         $expectedError = new Error("The cms directory already exists", 400);
 
@@ -100,12 +96,6 @@ class WpInstallServiceTest extends TestCase
 
         $this->wpCommandService->expects(self::once())
             ->method("installPlugins");
-
-        $this->auth0Service->expects(self::once())
-            ->method("configureAuth0");
-
-        $this->auth0Service->expects(self::once())
-            ->method("addZilchOptions");
 
         $this->wpCommandService->expects(self::once())
             ->method("executeWpReWrite");

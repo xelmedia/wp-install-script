@@ -3,15 +3,10 @@ declare(strict_types=1);
 
 class WPInstallScriptTest {
     private function testInstalledPlugins(): void {
-        $plugins = exec("node_modules/.bin/wp-env run tests-cli wp plugin list --format=json --path=/var/www/html/cms");
+        $plugins = exec("node_modules/.bin/wp-env run tests-cli wp plugin list --format=json --path=/var/www/html");
         $plugins = json_decode($plugins);
         $expectedPlugins = [
-            'wp-gatsby',
-            'wp-graphql-gutenberg',
-            'wp-graphql',
-            'zilch-assistant',
-            'contact-form-7',
-            'auth0'
+            'zilch-assistant'
         ];
         foreach ($plugins as $plugin) {
             foreach ($expectedPlugins as $index => $expectedPlugin) {
@@ -31,7 +26,7 @@ class WPInstallScriptTest {
     }
 
     private function testWPLanguageInstalled(): void {
-        $languages = exec("node_modules/.bin/wp-env run tests-cli wp core language list --status=active --path=/var/www/html/cms");
+        $languages = exec("node_modules/.bin/wp-env run tests-cli wp core language list --status=active --path=/var/www/html");
         if(!str_contains($languages, "nl_NL")) {
             throw new Exception("Nederlands is not installed as a core language");
         }
@@ -56,13 +51,8 @@ class WPInstallScriptTest {
             }
         }
 
-        $domain = $this->readEnvFile(__DIR__."/.auth0.env")["ZILCH_AUTH0_TENANT_DOMAIN"];
-        $gatewayHost = $this->readEnvFile(__DIR__."/.auth0.env")["ZILCH_AUTH0_CUSTOM_TENANT_DOMAIN"];
         if (str_contains($finalUrl, "upgrade.php")) {
             return;
-        }
-        if (!str_contains($finalUrl, $domain) && !str_contains($finalUrl, $gatewayHost)) {
-            throw new Exception("The redirect URL does not represent the universal login page of Auth0: $finalUrl");
         }
     }
 

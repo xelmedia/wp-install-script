@@ -189,7 +189,7 @@ class WPCommandServiceTest extends TestCase
     public function testRemovePLugins()
     {
         $excludedPlugins = ["wp-gatsby", "wp-graphql", "wp-graphql-gutenberg",
-            "contact-form-7", "zilch-assistant", "auth0"];
+            "contact-form-7", "zilch-assistant"];
         $excludedPlugins = join(",", $excludedPlugins);
         $command = "plugin uninstall --all --deactivate --exclude=$excludedPlugins";
         $expectedFormattedCommand = "$this->phpBin $this->pharFilePath $command --path=$this->wordpressPath";

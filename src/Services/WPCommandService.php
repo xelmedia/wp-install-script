@@ -13,18 +13,11 @@ class WPCommandService
     private string $phpBin;
     private string $pharFilePath;
     private string $wordpressPath;
-    private const GRAPHQL_GUTENBERG_PLUGIN_VERSION = "0.4.1";
-    private const GRAPHQL_PLUGIN_VERSION = "1.22.0";
-    private const CONTACTFORM_7_VERSION = "5.9";
     private CommandExecutor $cmdExec;
 
     private const PLUGINS_TO_INSTALL = [
-            'wp-gatsby' => "https://downloads.wordpress.org/plugin/wp-gatsby.zip",
-            'wp-graphql' => "https://downloads.wordpress.org/plugin/wp-graphql.". self::GRAPHQL_PLUGIN_VERSION .".zip",
-            'wp-graphql-gutenberg' => "https://github.com/pristas-peter/wp-graphql-gutenberg/archive/refs/tags/v".self::GRAPHQL_GUTENBERG_PLUGIN_VERSION.".zip",
-            'contact-form-7' => "https://downloads.wordpress.org/plugin/contact-form-7.". self::CONTACTFORM_7_VERSION .".zip",
             'zilch-assistant' => 'https://gitlab.xel.nl/chameleon/kameleon-assistant-plugin-zip/-/raw/latest/zilch-assistant.zip'
-        ];
+    ];
 
     public function __construct(string $phpBin, string $pharFilePath, string $wordpressPath, ?CommandExecutor $cmdExec = null)
     {
@@ -66,8 +59,7 @@ class WPCommandService
     public function executeCreateWpConfig(string $dbEnvFilePath): void
     {
         $envData = FileHelper::readEnvFile($dbEnvFilePath);
-        $command = 'config create --dbname=' . escapeshellarg($envData["DB_NAME"]) . ' --dbuser=' . escapeshellarg($envData["DB_USER"]) . ' --dbpass=' . escapeshellarg($envData["DB_PASS"]) . ' --dbhost=' . escapeshellarg($envData["DB_HOST"] ?? "localhost");
-        $this->executeWPCommand($command, "Something went wrong while creating wordpress database config");
+        FileHelper::writeEnvFile($dbEnvFilePath, $this->generateWordPressSalts());
     }
 
     /**
@@ -144,7 +136,7 @@ class WPCommandService
      */
     public function executeWpCoreInstall($domainName, $projectName): void
     {
-        $adminEmail = "email@zilch.nl";
+        $adminEmail = "email@zilch.website";
         $command = 'core install --url=' . escapeshellarg($domainName) . ' --title=' . escapeshellarg($projectName) . ' --admin_user=zilch-admin ' . '--admin_email=' . escapeshellarg($adminEmail);
         $this->executeWPCommand($command, "Something went wrong while installing wordpress core for the given domain name: $domainName");
     }
@@ -186,7 +178,6 @@ class WPCommandService
     public function removePlugins(): void
     {
         $pluginsToNotDelete = array_keys(self::PLUGINS_TO_INSTALL);
-        $pluginsToNotDelete[] = 'auth0';
         $excludePlugins = join(",", $pluginsToNotDelete);
         try {
             $command = "plugin uninstall --all --deactivate --exclude=$excludePlugins";

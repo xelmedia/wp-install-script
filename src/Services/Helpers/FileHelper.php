@@ -119,4 +119,40 @@ apache_modules:
 YAML;
         file_put_contents("$wordpressPath/wp-cli.yml", $content);
     }
+
+    public static function clearDirectory($directory, $preserve = []): bool
+    {
+        if (!is_dir($directory)) {
+            return false;
+        }
+
+        $iterator = new \FilesystemIterator($directory, \FilesystemIterator::SKIP_DOTS);
+
+        foreach ($iterator as $item) {
+            $fileName = $item->getFilename();
+
+            // Skip preserved files
+            if (in_array($fileName, $preserve)) {
+                continue;
+            }
+
+            if ($item->isDir()) {
+                // Recursively clear subdirectories
+                self::clearDirectory($item->getPathname(), $preserve);
+                rmdir($item->getPathname());
+            } else {
+                // Delete files
+                unlink($item->getPathname());
+            }
+        }
+
+        return true;
+    }
+
+    public static function copyFile($source, $destination)
+    {
+        if (!copy($source, $destination)) {
+            throw new Exception("File copy failed from  $source to $destination", 500);
+        }
+    }
 }
