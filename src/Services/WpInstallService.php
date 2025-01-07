@@ -67,10 +67,8 @@ class WpInstallService
 
             $this->composerCommandService->installBedrock();
 
-//$this->wpCommandService->executeWpCoreInstall($domainName, $projectName);
-//$this->wpCommandService->executeWpLanguageCommands();
-
-            //FileHelper::generateYMLFile($this->wordpressPath);
+            $this->wpCommandService->executeWpCoreInstall($domainName, $projectName);
+            $this->wpCommandService->executeWpLanguageCommands();
         } catch (Error|Exception|Throwable $e) {
             $this->cleanUpScript(true);
             $this->wpInstallHelper->generateResponse($e);

@@ -5,7 +5,6 @@ namespace App;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use App\Services\Helpers\FileHelper;
 use App\Services\WpInstallService;
 use Phar;
 
@@ -41,18 +40,15 @@ $wpInstaller = new WpInstallService($documentRoot, $environment);
 $wpInstaller->installWpScripts($domainName, $projectName);
 
 $staticContentDirs = explode(",", $staticContentDirs);
+$tag = PACKAGE_VERSION;
+$externalFileUrl = "https://raw.githubusercontent.com/xelmedia/wp-install-script/$tag/scripts/deploy-zilch.php";
 
-$scriptPath = "src/scripts/deploy-zilch.php";
-
-$pharPath = "phar://{$pharFile}/{$scriptPath}";
-// Get the file contents
-$fileContents = file_get_contents($pharPath);
-
+$fileContents = file_get_contents($externalFileUrl);
 foreach ($staticContentDirs as $staticContentDir) {
     if (file_put_contents($staticContentDir . "/deploy-zilch.php", $fileContents) === false) {
-        echo "Failed to write the file to: {$staticContentDir}"
+        echo "Failed to write the file to: {$staticContentDir}";
         exit(1);
     }
 }
 
-//$wpInstaller->cleanUpScript();
+$wpInstaller->cleanUpScript();
