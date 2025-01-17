@@ -104,38 +104,4 @@ YAML;
         $content = file_get_contents($this->ymlFilePath);
         assertEquals($expectedContent, $content);
     }
-
-    public function testValidatePluginExists_Exists(): void {
-        $mockIsDir = (new MockBuilder())
-            ->setNamespace("App\Services\Helpers")
-            ->setName("is_dir")
-            ->setFunction(function() {
-                return true;
-            })
-            ->build();
-
-        $mockIsDir->enable();
-        $error = null;
-        try {
-            FileHelper::validatePluginIsInstalled($this->dirPath, "some plugin");
-        } catch (\Throwable $e) {
-            $error = $e;
-        }
-        self::assertNull($error);
-        $mockIsDir->disable();
-    }
-    public function testValidatePluginExists_DoesNotExist(): void {
-        $mockIsDir = (new MockBuilder())
-            ->setNamespace("App\Services\Helpers")
-            ->setName("is_dir")
-            ->setFunction(function() {
-                return false;
-            })
-            ->build();
-
-        $mockIsDir->enable();
-        $this->expectExceptionMessage("The plugin some plugin was not installed correctly");
-        FileHelper::validatePluginIsInstalled($this->dirPath, "some plugin");
-        $mockIsDir->disable();
-    }
 }

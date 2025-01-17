@@ -98,19 +98,6 @@ class FileHelper
         return $envData;
     }
 
-    /**
-     * validate that plugin is installed given plugin name
-     * it will check if the given plugin exists in the plugins folder
-     * throws an error if the plugin couldn't be found
-     * @throws Exception
-     */
-    public static function validatePluginIsInstalled(string $wordpressPath, string $pluginName): void
-    {
-        if (!is_dir("$wordpressPath/wp-content/plugins/$pluginName")) {
-            throw new Exception("The plugin $pluginName was not installed correctly", 500);
-        }
-    }
-
     public static function generateYMLFile(string $wordpressPath): void
     {
         $content = <<<YAML

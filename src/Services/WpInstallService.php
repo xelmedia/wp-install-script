@@ -62,8 +62,8 @@ class WpInstallService
             $this->wpInstallHelper->validatePHPVersion();
             FileHelper::clearDirectory($this->documentRoot, [".env", ".env.zilch", Phar::running(false)]);
 
-            $this->downloadService->downloadPharFile($this->wpcliPharFilePath, $this->pharFileDirectory);
-            $this->downloadService->downloadComposerPharFile($this->composerPharFilePath, $this->pharFileDirectory);
+            $this->downloadService->downloadPharFile($this->wpcliPharFilePath);
+            $this->downloadService->downloadComposerPharFile($this->composerPharFilePath);
 
             $this->composerCommandService->installBedrock();
 

@@ -27,8 +27,7 @@ class DeployZilch
             echo json_encode(['status' => 'success', 'message' => 'Build has been downloaded and extracted to dir']);
         } catch (Exception $e) {
             $this->restoreBackup();
-            http_response_code(500);
-            die(json_encode(['status' => 'error', 'message' => $e->getMessage()]));
+            throw $e;
         }
     }
 
@@ -176,5 +175,6 @@ try {
     $deployZilch->run();
 } catch (Exception $e) {
     http_response_code(500);
-    die(json_encode(['status' => 'error', 'message' => $e->getMessage()]));
+    json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+    return 1;
 }

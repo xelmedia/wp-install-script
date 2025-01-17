@@ -15,18 +15,17 @@ class WPCommandService
     private string $wordpressPath;
     private CommandExecutor $cmdExec;
 
-    private const PLUGINS_TO_INSTALL = [
-            'zilch-assistant' => 'https://gitlab.xel.nl/chameleon/kameleon-assistant-plugin-zip/-/raw/latest/zilch-assistant.zip'
-    ];
-
-    public function __construct(string $phpBin, string $pharFilePath, string $wordpressPath, ?CommandExecutor $cmdExec = null)
-    {
+    public function __construct(
+        string $phpBin,
+        string $pharFilePath,
+        string $wordpressPath,
+        ?CommandExecutor $cmdExec = null
+    ) {
         $this->phpBin = $phpBin;
         $this->pharFilePath = $pharFilePath;
         $this->wordpressPath = $wordpressPath;
         $this->cmdExec = $cmdExec ?? new CommandExecutor();
     }
-
 
     /**
      * @throws Exception
@@ -49,56 +48,6 @@ class WPCommandService
     public function formatWpCommand(string $command): string
     {
         return "$this->phpBin $this->pharFilePath $command";
-    }
-
-    /**
-     * Gets option from the options table given option name
-     * Convert the option value into an array and returns it
-     * Returns null if the option doesnt exist or it cannot be converted to array
-     * @param string $option_name
-     * @param bool $array
-     * @return array|string|null
-     */
-    public function getOption(string $option_name, $array = true): array|string|null
-    {
-        $command = $array ? "option get $option_name --format=json" : "option get $option_name";
-        $formattedCommand = $this->formatWPCommand($command);
-        try {
-            $output = $this->cmdExec->exec($formattedCommand, true);
-            if (gettype($output) === "array") {
-                $array = [];
-                foreach ($output as $element) {
-                    $decoded = json_decode($element);
-                    foreach ($decoded as $key => $value) {
-                        $array[$key] = $value;
-                    }
-                }
-                return $array;
-            }
-            return null;
-        } catch (Throwable $e) {
-            return null;
-        }
-    }
-
-    /**
-     * Updates the options in the option table given option name and value
-     * @throws Exception
-     */
-    public function updateOption(string $option_name, mixed $option_value): void
-    {
-        $json_value = json_encode($option_value);
-        $escaped_value = escapeshellarg($json_value);
-        $command = "option update $option_name $escaped_value --format=json --autoload=yes";
-        $this->executeWPCommand($command, "something went wrong adding the option $option_name");
-    }
-
-    /**
-     * @throws Exception
-     */
-    public function validatePluginIsInstalled(string $pluginName): void
-    {
-        FileHelper::validatePluginIsInstalled($this->wordpressPath, $pluginName);
     }
 
     /**
