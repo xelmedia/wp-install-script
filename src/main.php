@@ -27,7 +27,7 @@ $options = getOptions();
 $projectName = $options['p'] ?? $options['projectName'] ?? null;
 $domainName = $options['d'] ?? $options['domainName'] ?? null;
 $environment = $options['e'] ?? $options['environment'] ?? "development";
-$staticContentDirs = $options['static-content-dirs'] ?? [];
+$staticContentDirs = $options['static-content-dirs'] ?? '';
 
 if (!$domainName || !$projectName) {
     echo "Usage: php zilch-wordpress-install-script.php -p <projectName> -d <domainName> -e <environment> " .
@@ -41,7 +41,7 @@ $wpInstaller->installWpScripts($domainName, $projectName);
 
 $staticContentDirs = explode(",", $staticContentDirs);
 $tag = PACKAGE_VERSION;
-$externalFileUrl = "https://raw.githubusercontent.com/xelmedia/wp-install-script/$tag/scripts/deploy-zilch.php";
+$externalFileUrl = "https://raw.githubusercontent.com/xelmedia/wp-install-script/$tag/src/scripts/deploy-zilch.php";
 
 $fileContents = file_get_contents($externalFileUrl);
 foreach ($staticContentDirs as $staticContentDir) {

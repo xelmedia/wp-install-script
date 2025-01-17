@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Helpers;
 
 use Exception;
+use FilesystemIterator;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
@@ -55,7 +56,7 @@ class FileHelper
     public static function removeDir($dirPath): void
     {
         if (file_exists($dirPath)) {
-            $it = new RecursiveDirectoryIterator($dirPath, RecursiveDirectoryIterator::SKIP_DOTS);
+            $it = new RecursiveDirectoryIterator($dirPath, FilesystemIterator::SKIP_DOTS);
             $files = new RecursiveIteratorIterator(
                 $it,
                 RecursiveIteratorIterator::CHILD_FIRST

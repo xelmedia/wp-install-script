@@ -3,16 +3,16 @@ declare(strict_types=1);
 
 class WPInstallScriptTest {
     private function testInstalledPlugins(): void {
-        $plugins = exec("node_modules/.bin/wp-env run tests-cli wp plugin list --format=json --path=/var/www/html/cms");
+        $plugins = exec("node_modules/.bin/wp-env run tests-cli wp plugin list --format=json");
         $plugins = json_decode($plugins);
         $expectedPlugins = [
-            'zilch-assistant'
+            'bedrock-autoloader'
         ];
         foreach ($plugins as $plugin) {
             foreach ($expectedPlugins as $index => $expectedPlugin) {
                 if(str_contains($plugin->name, $expectedPlugin)) {
-                    if($plugin->status !== "active") {
-                        throw new Exception("The plugin, $expectedPlugin do exist but its not active");
+                    if($plugin->status !== "must-use") {
+                        throw new Exception("The plugin, $expectedPlugin do exist but its not a must use");
                     }
                     unset($expectedPlugins[$index]);
                     break;
@@ -26,13 +26,13 @@ class WPInstallScriptTest {
     }
 
     private function testWPLanguageInstalled(): void {
-        $languages = exec("node_modules/.bin/wp-env run tests-cli wp core language list --status=active --path=/var/www/html/cms");
+        $languages = exec("node_modules/.bin/wp-env run tests-cli wp core language list --status=active");
         if(!str_contains($languages, "nl_NL")) {
             throw new Exception("Nederlands is not installed as a core language");
         }
     }
     private function testWPInstallation(): void {
-        $url = "http://localhost:8889/cms/wp-admin";
+        $url = "http://localhost:8889/wp-admin";
 
         $context = stream_context_create([
             'http' => [
