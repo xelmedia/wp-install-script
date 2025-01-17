@@ -11,39 +11,38 @@ use Throwable;
 
 class WpInstallService
 {
-
-    private const WORDPRESS_VERSION =  '6.5.2';
     private string $documentRoot;
-    private string $wordpressPath;
     private string $pharFileDirectory;
-    private string $pharFilePath;
-    private string $dbEnvFilePath;
-    private string $auth0EnvFilePath;
+    private string $wpcliPharFilePath;
+    private string $composerPharFilePath;
+
     private string $environment;
     private DownloadService $downloadService;
     private WPCommandService $wpCommandService;
-    private Auth0Service $auth0Service;
+    private ComposerCommandService $composerCommandService;
+
     private WpInstallHelper $wpInstallHelper;
     public function __construct(
         string $documentRoot,
         string $runLevel,
         ?DownloadService $downloadService = null,
         ?WPCommandService $wpCommandService = null,
-        ?Auth0Service $auth0Service = null,
-        ?WpInstallHelper $wpInstallHelper = null
+        ?WpInstallHelper $wpInstallHelper = null,
+        ?ComposerCommandService $composerCommandService = null,
     ) {
         $this->documentRoot = $documentRoot;
         $this->pharFileDirectory = "$documentRoot/WPResources";
-        $this->pharFilePath = "$this->pharFileDirectory/wp-cli.phar";
-        $this->dbEnvFilePath =  "$documentRoot/.db.env";
-        $this->wordpressPath = "$documentRoot/cms";
-        $this->auth0EnvFilePath = "$documentRoot/.auth0.env";
+        $this->wpcliPharFilePath = "$this->pharFileDirectory/wp-cli.phar";
+        $this->composerPharFilePath = "$this->pharFileDirectory/composer.phar";
+
         $this->environment = $runLevel;
         $this->downloadService = $downloadService ?? new DownloadService();
         $this->wpCommandService = $wpCommandService
-            ?? new WPCommandService(PHP_BINARY, $this->pharFilePath, $this->wordpressPath);
-        $this->auth0Service = $auth0Service
-            ?? new Auth0Service($this->wpCommandService, $this->auth0EnvFilePath, $this->wordpressPath);
+            ?? new WPCommandService(PHP_BINARY, $this->wpcliPharFilePath, $this->documentRoot);
+
+        $this->composerCommandService = $composerCommandService
+            ?? new ComposerCommandService(PHP_BINARY, $this->composerPharFilePath, $this->documentRoot);
+
         $this->wpInstallHelper = $wpInstallHelper ?? new WpInstallHelper();
     }
     /**
@@ -61,45 +60,33 @@ class WpInstallService
         try {
             ob_start();
             $this->wpInstallHelper->validatePHPVersion();
-            if (FileHelper::pathExists($this->wordpressPath)) {
-                $error = new Error("The cms directory already exists", 400);
-                $this->wpInstallHelper->generateResponse($error);
-                return;
-            }
-            $this->downloadService->downloadPharFile($this->pharFilePath, $this->pharFileDirectory);
-            $this->wpCommandService->executeCoreDownload(self::WORDPRESS_VERSION);
-            $this->wpCommandService->executeCreateWpConfig($this->dbEnvFilePath);
+            FileHelper::clearDirectory($this->documentRoot, [".env", ".env.zilch", Phar::running(false)]);
+
+            $this->downloadService->downloadPharFile($this->wpcliPharFilePath);
+            $this->downloadService->downloadComposerPharFile($this->composerPharFilePath);
+
+            $this->composerCommandService->installBedrock();
+
             $this->wpCommandService->executeWpCoreInstall($domainName, $projectName);
+            $this->wpCommandService->executeWpReWrite();
             $this->wpCommandService->executeWpLanguageCommands();
-            ;
-            $this->wpCommandService->installPlugins();
-            $this->auth0Service->configureAuth0();
-            $this->auth0Service->addZilchOptions();
-            FileHelper::generateYMLFile($this->wordpressPath);
-            $this->wpCommandService->executeWpRewrite();
-            $this->wpCommandService->removePlugins();
         } catch (Error|Exception|Throwable $e) {
             $this->cleanUpScript(true);
             $this->wpInstallHelper->generateResponse($e);
             return;
         }
-        $this->cleanUpScript();
         $this->wpInstallHelper->generateResponse();
     }
 
-    private function cleanUpScript($removeWordPress = false): void
+    public function cleanUpScript($removeWordPress = false): void
     {
-        FileHelper::removeFile($this->dbEnvFilePath);
         FileHelper::removeDir($this->pharFileDirectory);
         if ($this->environment !== "testing") {
             $pharFile = Phar::running(false);
             FileHelper::removeFile($pharFile);
         }
-        FileHelper::removeFile("$this->wordpressPath/wp-cli.yml");
-        FileHelper::removeFile($this->auth0EnvFilePath);
         if ($removeWordPress) {
-            FileHelper::removeDir($this->wordpressPath);
-            FileHelper::removeFile("$this->documentRoot/.htaccess");
+            FileHelper::clearDirectory($this->documentRoot, [".env", ".env.zilch"]);
         }
     }
 }

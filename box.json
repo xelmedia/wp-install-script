@@ -4,7 +4,7 @@
   "stub": true,
   "chmod": "0755",
   "directories": ["src"],
-  "files": ["composer.json"],
+  "files": ["composer.json", "vendor/version.php"],
   "compactors": [
     "KevinGH\\Box\\Compactor\\Php"
   ]

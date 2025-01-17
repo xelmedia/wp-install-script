@@ -8,21 +8,20 @@ use Throwable;
 
 class DownloadService
 {
-
     /**
      * Downloads a wp-cli.phar files that will help executing wordpress commands
      * @throws Exception
      */
-    public function downloadPharFile(string $pharFilePath, string $pharFileDirectory): void
+    public function downloadPharFile(string $pharFilePath): void
     {
         $downloadUrl = "https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar";
-        $this->downloadFile($downloadUrl, $pharFilePath, $pharFileDirectory);
+        $this->downloadFile($downloadUrl, $pharFilePath);
     }
 
-    public function downloadComposerPharFile(string $composerFilePath, string $composerFileDirectory): void
+    public function downloadComposerPharFile(string $composerFilePath): void
     {
         $composerUrl = "https://getcomposer.org/composer.phar";
-        $this->downloadFile($composerUrl, $composerFilePath, $composerFileDirectory);
+        $this->downloadFile($composerUrl, $composerFilePath);
     }
 
     /**
@@ -34,10 +33,10 @@ class DownloadService
      * @return void
      * @throws Exception
      */
-    private function downloadFile(string $url, string $filePath, string $dirPath): void
+    private function downloadFile(string $url, string $filePath): void
     {
         try {
-            FileHelper::createDir($dirPath);
+            FileHelper::createDir(dirname($filePath));
             $content = file_get_contents($url);
             if (file_put_contents($filePath, $content) !== false) {
                 chmod($filePath, 0755);

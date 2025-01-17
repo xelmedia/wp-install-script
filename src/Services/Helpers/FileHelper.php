@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Helpers;
 
 use Exception;
+use FilesystemIterator;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
@@ -55,7 +56,7 @@ class FileHelper
     public static function removeDir($dirPath): void
     {
         if (file_exists($dirPath)) {
-            $it = new RecursiveDirectoryIterator($dirPath, RecursiveDirectoryIterator::SKIP_DOTS);
+            $it = new RecursiveDirectoryIterator($dirPath, FilesystemIterator::SKIP_DOTS);
             $files = new RecursiveIteratorIterator(
                 $it,
                 RecursiveIteratorIterator::CHILD_FIRST
@@ -97,19 +98,6 @@ class FileHelper
         return $envData;
     }
 
-    /**
-     * validate that plugin is installed given plugin name
-     * it will check if the given plugin exists in the plugins folder
-     * throws an error if the plugin couldn't be found
-     * @throws Exception
-     */
-    public static function validatePluginIsInstalled(string $wordpressPath, string $pluginName): void
-    {
-        if (!is_dir("$wordpressPath/wp-content/plugins/$pluginName")) {
-            throw new Exception("The plugin $pluginName was not installed correctly", 500);
-        }
-    }
-
     public static function generateYMLFile(string $wordpressPath): void
     {
         $content = <<<YAML
@@ -118,5 +106,34 @@ apache_modules:
 
 YAML;
         file_put_contents("$wordpressPath/wp-cli.yml", $content);
+    }
+
+    public static function clearDirectory($directory, $preserve = []): bool
+    {
+        if (!is_dir($directory)) {
+            return false;
+        }
+
+        $iterator = new \FilesystemIterator($directory, \FilesystemIterator::SKIP_DOTS);
+
+        foreach ($iterator as $item) {
+            $fileName = $item->getFilename();
+
+            // Skip preserved files
+            if (in_array($fileName, $preserve)) {
+                continue;
+            }
+
+            if ($item->isDir()) {
+                // Recursively clear subdirectories
+                self::clearDirectory($item->getPathname(), $preserve);
+                rmdir($item->getPathname());
+            } else {
+                // Delete files
+                unlink($item->getPathname());
+            }
+        }
+
+        return true;
     }
 }

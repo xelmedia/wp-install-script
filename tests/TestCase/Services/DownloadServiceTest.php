@@ -9,7 +9,7 @@ use PHPUnit\Framework\TestCase;
 class DownloadServiceTest extends TestCase {
     private $wpcliPharName = "wp-cli.phar";
     private $composerPharName = "composer.phar";
-    private $downloadDir = __DIR__;
+    private $downloadDir = __DIR__ . DIRECTORY_SEPARATOR . "mock-doc-root";
     private DownloadService $downloadService;
 
     protected function setUp(): void {
@@ -17,35 +17,22 @@ class DownloadServiceTest extends TestCase {
     }
 
     protected function tearDown(): void {
-        $filesToDelete = [
-            "$this->downloadDir/$this->wpcliPharName",
-            "$this->downloadDir/$this->composerPharName"
-        ];
-        foreach ($filesToDelete as $fileToDelete) {
-            if(file_exists($fileToDelete)) {
-                unlink($fileToDelete);
-            }
-        }
+        exec("rm -r $this->downloadDir");
     }
 
-    public function testDownloadPharFile_Success(): void {
-        $error = null;
-        try {
-            $this->downloadService->downloadPharFile("$this->downloadDir/$this->wpcliPharName", $this->downloadDir);
-
-        } catch (\Throwable $e) {
-            $error = $e;
-        }
-        self::assertEquals(null, $error);
+    public function testDownloadWpcliPhar()
+    {
+        $this->assertFalse(file_exists($pharPath = $this->downloadDir . DIRECTORY_SEPARATOR . $this->wpcliPharName));
+        $this->downloadService->downloadPharFile($pharPath);
+        $this->assertTrue(file_exists($pharPath));
+        $this->assertStringContainsString("WP-CLI", exec("$pharPath --version"));
     }
-    public function testDownloadComposerPharFile_Success(): void {
-        $error = null;
-        try {
-            $this->downloadService->downloadComposerPharFile("$this->downloadDir/$this->composerPharName", $this->downloadDir);
 
-        } catch (\Throwable $e) {
-            $error = $e;
-        }
-        self::assertEquals(null, $error);
+    public function testDownloadComposerPhar()
+    {
+        $this->assertFalse(file_exists($pharPath = $this->downloadDir . DIRECTORY_SEPARATOR . $this->composerPharName));
+        $this->downloadService->downloadComposerPharFile($pharPath);
+        $this->assertTrue(file_exists($pharPath));
+        $this->assertStringContainsString("Composer version", exec("$pharPath --version"));
     }
 }

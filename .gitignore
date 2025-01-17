@@ -7,4 +7,5 @@ tests/ta/node_modules
 tests/ta/.db.env
 tests/ta/package.json
 tests/ta/yarn.lockcghooks.lock
-
+test-site
+test-site-2

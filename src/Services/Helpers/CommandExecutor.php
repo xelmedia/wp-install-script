@@ -23,7 +23,8 @@ class CommandExecutor
 
     public function execOrFail(string $command, ?string $errorMessage = null, ?int $code = null): void
     {
-        if (!$this->exec($command)) {
+        $result = $this->exec($command);
+        if ($result === false) {
             throw new \Exception($errorMessage ?? "Something went wrong executing the command: $command", $code ?? 500);
         }
     }
