@@ -35,9 +35,11 @@ class ComposerCommandService
         $command = "$this->phpBin $this->pharFilePath create-project --repository=$respository roots/bedrock $this->wordpressPath/bedrock";
         $this->cmdExec->execOrFail($command, "Bedrock was not installed successfully");
 
-        $this->cmdExec->execOrFail("mv $bedrockPath/* $bedrockPath/.* $this->wordpressPath", "Moving bedrock failed");
+        $this->cmdExec->execOrFail("mv -f $bedrockPath/* $bedrockPath/.* $this->wordpressPath", "Moving bedrock failed");
         if (!FileHelper::pathExists($this->wordpressPath . "/web")) {
             throw new Exception("The wordpress core was not downloaded successfully", 500);
         }
+
+        FileHelper::removeDir($bedrockPath);
     }
 }

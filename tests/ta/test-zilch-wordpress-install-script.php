@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 class WPInstallScriptTest {
     private function testInstalledPlugins(): void {
-        $plugins = exec("node_modules/.bin/wp-env run tests-cli wp plugin list --format=json --path=/var/www/html");
+        $plugins = exec("node_modules/.bin/wp-env run tests-cli wp plugin list --format=json --path=/var/www/html/cms");
         $plugins = json_decode($plugins);
         $expectedPlugins = [
             'zilch-assistant'
@@ -26,13 +26,13 @@ class WPInstallScriptTest {
     }
 
     private function testWPLanguageInstalled(): void {
-        $languages = exec("node_modules/.bin/wp-env run tests-cli wp core language list --status=active --path=/var/www/html");
+        $languages = exec("node_modules/.bin/wp-env run tests-cli wp core language list --status=active --path=/var/www/html/cms");
         if(!str_contains($languages, "nl_NL")) {
             throw new Exception("Nederlands is not installed as a core language");
         }
     }
     private function testWPInstallation(): void {
-        $url = "http://localhost:8889/wp-admin";
+        $url = "http://localhost:8889/cms/wp-admin";
 
         $context = stream_context_create([
             'http' => [
@@ -60,22 +60,6 @@ class WPInstallScriptTest {
         $this->testWPInstallation();
         $this->testInstalledPlugins();
         $this->testWPLanguageInstalled();
-    }
-
-    private function readEnvFile($path): array {
-        $envData = [];
-        if (file_exists($path)) {
-            $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-            foreach ($lines as $line) {
-                $line = trim($line);
-                if ($line === '' || $line[0] === "#") {
-                    continue;
-                }
-                list($key, $value) = explode('=', $line, 2);
-                $envData[trim($key)] = trim($value);
-            }
-        }
-        return $envData;
     }
 }
 

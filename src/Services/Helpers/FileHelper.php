@@ -148,11 +148,4 @@ YAML;
 
         return true;
     }
-
-    public static function copyFile($source, $destination)
-    {
-        if (!copy($source, $destination)) {
-            throw new Exception("File copy failed from  $source to $destination", 500);
-        }
-    }
 }

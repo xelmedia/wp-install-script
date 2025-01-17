@@ -27,39 +27,14 @@ class WPCommandService
         $this->cmdExec = $cmdExec ?? new CommandExecutor();
     }
 
-    /**
-     * Executes a command to download the wp core files
-     * Throws an error if the wordpress directory doesnt exists at defined the wordpress path
-     * @throws Exception
-     */
-    public function executeCoreDownload(string $wordpressVersion): void
-    {
-        $wpCommand = "$this->phpBin $this->pharFilePath core download --version=" . escapeshellarg($wordpressVersion) . " --path=" . escapeshellarg($this->wordpressPath);
-        $this->cmdExec->execOrFail($wpCommand, "The wordpress core was not downloaded successfully");
-        if (!FileHelper::pathExists($this->wordpressPath)) {
-            throw new Exception("The wordpress core was not downloaded successfully", 500);
-        }
-    }
 
     /**
      * @throws Exception
      */
     public function executeWpReWrite(): void
     {
-        $command = "cd $this->wordpressPath && $this->phpBin $this->pharFilePath rewrite structure '/%postname%/' --hard  --path=$this->wordpressPath";
+        $command = "cd $this->wordpressPath && $this->phpBin $this->pharFilePath rewrite structure '/%postname%/' --hard";
         $this->cmdExec->execOrFail($command, "Something went wrong while executing wp rewrite");
-    }
-
-    /**
-     * Reads the env file vars and uses it to execute a config create command at the wordpress directory
-     * @param string $dbEnvFilePath
-     * @return void
-     * @throws Exception
-     */
-    public function executeCreateWpConfig(string $dbEnvFilePath): void
-    {
-        $envData = FileHelper::readEnvFile($dbEnvFilePath);
-        FileHelper::writeEnvFile($dbEnvFilePath, $this->generateWordPressSalts());
     }
 
     /**
@@ -73,7 +48,7 @@ class WPCommandService
 
     public function formatWpCommand(string $command): string
     {
-        return "$this->phpBin $this->pharFilePath $command --path=$this->wordpressPath";
+        return "$this->phpBin $this->pharFilePath $command";
     }
 
     /**
@@ -149,41 +124,5 @@ class WPCommandService
     {
         $command = 'language core install nl_NL --activate';
         $this->executeWPCommand($command, "Something went wrong while installing and updating the language");
-    }
-
-    /**
-     * Execute an install plugin command on the wordpress directory
-     * @param String $plugin
-     * @throws Exception
-     */
-    public function installPlugin(String $plugin): void
-    {
-        $command = 'plugin install ' . escapeshellarg($plugin) . ' --activate';
-        $this->executeWPCommand($command, "Something went wrong while installing the plugin: $plugin");
-    }
-
-    /**
-     * It will install and activate plugins
-     * It will throw an error if a plugin was not installed successfully
-     * @throws Exception
-     */
-    public function installPlugins(): void
-    {
-        foreach (self::PLUGINS_TO_INSTALL as $pluginName => $pluginSlug) {
-            $this->installPlugin($pluginSlug);
-            $this->validatePluginIsInstalled($pluginName);
-        }
-    }
-
-    public function removePlugins(): void
-    {
-        $pluginsToNotDelete = array_keys(self::PLUGINS_TO_INSTALL);
-        $excludePlugins = join(",", $pluginsToNotDelete);
-        try {
-            $command = "plugin uninstall --all --deactivate --exclude=$excludePlugins";
-            $this->executeWpCommand($command);
-        } catch (Exception $exception) {
-            // we dont need to throw an error if it does not exist!
-        }
     }
 }

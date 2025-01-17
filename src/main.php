@@ -27,9 +27,9 @@ $options = getOptions();
 $projectName = $options['p'] ?? $options['projectName'] ?? null;
 $domainName = $options['d'] ?? $options['domainName'] ?? null;
 $environment = $options['e'] ?? $options['environment'] ?? "development";
-$staticContentDirs = $options['static-content-dirs'] ?? null;
+$staticContentDirs = $options['static-content-dirs'] ?? [];
 
-if (!$domainName || !$projectName || !$staticContentDirs) {
+if (!$domainName || !$projectName) {
     echo "Usage: php zilch-wordpress-install-script.php -p <projectName> -d <domainName> -e <environment> " .
         "--static-content-dirs=<dir1,dir2>" . PHP_EOL;
     exit(1);

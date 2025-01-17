@@ -33,7 +33,7 @@ class WpInstallService
         $this->documentRoot = $documentRoot;
         $this->pharFileDirectory = "$documentRoot/WPResources";
         $this->wpcliPharFilePath = "$this->pharFileDirectory/wp-cli.phar";
-        $this->composerPharFilePath = "$this->pharFileDirectory/wp-cli.phar";
+        $this->composerPharFilePath = "$this->pharFileDirectory/composer.phar";
 
         $this->environment = $runLevel;
         $this->downloadService = $downloadService ?? new DownloadService();
@@ -68,6 +68,7 @@ class WpInstallService
             $this->composerCommandService->installBedrock();
 
             $this->wpCommandService->executeWpCoreInstall($domainName, $projectName);
+            $this->wpCommandService->executeWpReWrite();
             $this->wpCommandService->executeWpLanguageCommands();
         } catch (Error|Exception|Throwable $e) {
             $this->cleanUpScript(true);

@@ -1,5 +1,6 @@
 {
   "phpVersion": "8.1",
+  "core": "WordPress/WordPress#master",
   "plugins": [],
   "config": {
     "WP_DEBUG": true,

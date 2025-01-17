@@ -1,89 +1,180 @@
 <?php
-// Ensure the script is accessed via a POST request
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405); // Method Not Allowed
-    die("This script only accepts POST requests.");
-}
 
-if (!isset($_POST['downloadUrl']) || empty($_POST['downloadUrl'])) {
-    http_response_code(400); // Bad Request
-    die("Missing or invalid 'downloadUrl' parameter.");
-}
+class DeployZilch
+{
+    private string $downloadUrl;
+    private string $tempZipPath;
+    private string $backupDir;
+    private string $targetDir;
 
-// Sanitize parameters
-$downloadUrl = filter_var($_POST['downloadUrl'], FILTER_VALIDATE_URL);
+    public function __construct(string $downloadUrl, string $targetDir = __DIR__)
+    {
+        $this->downloadUrl = $downloadUrl;
+        $this->tempZipPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . uniqid('download_', true) . '.zip';
+        $this->backupDir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'zilch-backup_' . date('Ymd_His');
+        $this->targetDir = $targetDir;
+    }
 
-if (!$downloadUrl) {
-    http_response_code(400); // Bad Request
-    die("Invalid URL format.");
-}
+    public function run(): void
+    {
+        try {
+            $this->validateRequest();
+            $this->validateDomains();
+            $this->downloadFile();
+            $this->backupExistingFiles();
+            $this->extractZip();
+            $this->cleanup();
+            echo json_encode(['status' => 'success', 'message' => 'Build has been downloaded and extracted to dir']);
+        } catch (Exception $e) {
+            $this->restoreBackup();
+            http_response_code(500);
+            die(json_encode(['status' => 'error', 'message' => $e->getMessage()]));
+        }
+    }
 
-// Validate that the download URL is from the same domain
-$host = parse_url($downloadUrl, PHP_URL_HOST);
-if ($host !== $_SERVER['SERVER_NAME']) {
-    http_response_code(403); // Forbidden
-    die("The provided URL is not from the same domain.");
-}
+    private function validateRequest(): void
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            throw new Exception("This script only accepts POST requests.");
+        }
 
-// Define the directories
-$baseDir = __DIR__;
-$directory = realpath($baseDir);
+        if (empty($this->downloadUrl) || !filter_var($this->downloadUrl, FILTER_VALIDATE_URL)) {
+            throw new Exception("Missing or invalid 'downloadUrl' parameter.");
+        }
+    }
 
-if (!$directory || strpos($directory, realpath($baseDir)) !== 0) {
-    http_response_code(403); // Forbidden
-    die("Access to the specified path is not allowed.");
-}
+    private function validateDomains(): void
+    {
+        $downloadRoot = $this->getRootDomain($this->downloadUrl);
+        $serverRoot = $this->getRootDomain('https://' . $_SERVER['SERVER_NAME']);
 
-// Verify the directory exists
-if (!is_dir($directory)) {
-    http_response_code(404); // Not Found
-    die("The specified directory does not exist: $baseDir.");
-}
+        if ($downloadRoot !== $serverRoot) {
+            throw new Exception("The provided URL does not match the server's root domain. Expected: $serverRoot, Got: $downloadRoot");
+        }
+    }
 
-// Clear the target directory
-$files = array_diff(scandir($directory), ['.', '..']);
-foreach ($files as $file) {
-    $filePath = $directory . DIRECTORY_SEPARATOR . $file;
-    if (is_file($filePath)) {
-        unlink($filePath);
-    } elseif (is_dir($filePath)) {
-        array_map('unlink', glob("$filePath/*.*"));
-        rmdir($filePath);
+    private function downloadFile(): void
+    {
+        $downloadHost = parse_url($this->downloadUrl, PHP_URL_HOST);
+        $serverIp = $_SERVER['SERVER_ADDR'] ?? '127.0.0.1';
+
+        $ch = curl_init($this->downloadUrl);
+        curl_setopt($ch, CURLOPT_FILE, fopen($this->tempZipPath, 'w'));
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_RESOLVE, [
+            "$downloadHost:80:$serverIp",
+            "$downloadHost:443:$serverIp"
+        ]);
+
+        if (!curl_exec($ch) || curl_errno($ch)) {
+            throw new Exception("Error downloading the ZIP file: " . curl_error($ch));
+        }
+
+        curl_close($ch);
+    }
+
+    private function backupExistingFiles(): void
+    {
+        if (!is_dir($this->targetDir) || count(glob($this->targetDir . DIRECTORY_SEPARATOR . '*')) === 0) {
+            return;
+        }
+
+        if (!mkdir($this->backupDir, 0755, true)) {
+            throw new Exception("Failed to create backup directory: $this->backupDir");
+        }
+
+        foreach (glob($this->targetDir . DIRECTORY_SEPARATOR . '*') as $file) {
+            $backupPath = $this->backupDir . DIRECTORY_SEPARATOR . basename($file);
+            if ($file === __FILE__ || $file === $this->tempZipPath) {
+                continue;
+            }
+
+            rename($file, $backupPath);
+        }
+    }
+
+    private function extractZip(): void
+    {
+        $zip = new ZipArchive();
+        if ($zip->open($this->tempZipPath) === true) {
+            $zip->extractTo($this->targetDir);
+            $zip->close();
+        } else {
+            throw new Exception("Failed to unzip the downloaded file.");
+        }
+    }
+
+    private function restoreBackup(): void
+    {
+        if (!is_dir($this->backupDir)) {
+            return;
+        }
+
+        foreach (glob($this->backupDir . DIRECTORY_SEPARATOR . '*') as $backupFile) {
+            $originalPath = $this->targetDir . DIRECTORY_SEPARATOR . basename($backupFile);
+            rename($backupFile, $originalPath);
+        }
+
+        rmdir($this->backupDir);
+    }
+
+    private function cleanup(): void
+    {
+        if (file_exists($this->tempZipPath)) {
+            unlink($this->tempZipPath);
+        }
+    }
+
+    function getRootDomain(string $url): string
+    {
+        $suffixListUrl = 'https://publicsuffix.org/list/public_suffix_list.dat';
+        $cacheFile = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'public_suffix_list.dat';
+
+        // Check if the cache exists and is still valid
+        if (!file_exists($cacheFile)) {
+            $suffixListContent = file_get_contents($suffixListUrl);
+            if ($suffixListContent === false) {
+                throw new Exception("Failed to load the Public Suffix List.");
+            }
+            file_put_contents($cacheFile, $suffixListContent);
+        } else {
+            $suffixListContent = file_get_contents($cacheFile);
+        }
+
+        // Parse the list and filter out comments
+        $suffixes = array_filter(
+            explode("\n", $suffixListContent),
+            fn($line) => $line && $line[0] !== '/'
+        );
+
+        // Parse the host from the URL
+        $host = parse_url($url, PHP_URL_HOST);
+        if (!$host) {
+            throw new Exception("Invalid URL: Unable to parse host.");
+        }
+
+        $hostParts = explode('.', $host);
+        $count = count($hostParts);
+
+        // Match the longest suffix
+        for ($i = 0; $i < $count; $i++) {
+            $possibleSuffix = implode('.', array_slice($hostParts, $i));
+            if (in_array($possibleSuffix, $suffixes)) {
+                // Return the root domain (one part before the matched suffix)
+                return $i > 0 ? $hostParts[$i - 1] . '.' . $possibleSuffix : $possibleSuffix;
+            }
+        }
+
+        // Fallback to the original host if no match
+        return $host;
     }
 }
 
-// Download the ZIP file
-$tempZipPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . uniqid('download_', true) . '.zip';
-$zipResource = fopen($tempZipPath, 'w');
-$ch = curl_init($downloadUrl);
-curl_setopt($ch, CURLOPT_FILE, $zipResource);
-curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-curl_exec($ch);
-
-if (curl_errno($ch)) {
-    unlink($tempZipPath);
-    http_response_code(500); // Internal Server Error
-    die("Error downloading the ZIP file: " . curl_error($ch));
+try {
+    $downloadUrl = $_POST['downloadUrl'] ?? '';
+    $deployZilch = new DeployZilch($downloadUrl);
+    $deployZilch->run();
+} catch (Exception $e) {
+    http_response_code(500);
+    die(json_encode(['status' => 'error', 'message' => $e->getMessage()]));
 }
-
-curl_close($ch);
-fclose($zipResource);
-
-// Unzip the downloaded file
-$zip = new ZipArchive;
-if ($zip->open($tempZipPath) === true) {
-    $zip->extractTo($directory);
-    $zip->close();
-    unlink($tempZipPath); // Delete the temporary ZIP file
-} else {
-    unlink($tempZipPath);
-    http_response_code(500); // Internal Server Error
-    die("Failed to unzip the downloaded file.");
-}
-
-echo json_encode([
-    'status' => 'success',
-    'message' => "ZIP file downloaded and extracted successfully.",
-    'directory' => $directory
-]);
-?>
