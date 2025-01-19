@@ -1,4 +1,5 @@
 <?php
+namespace DeployScript;
 
 class DeployZilch
 {
@@ -25,7 +26,7 @@ class DeployZilch
             $this->extractZip();
             $this->cleanup();
             echo json_encode(['status' => 'success', 'message' => 'Build has been downloaded and extracted to dir']);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->restoreBackup();
             throw $e;
         }
@@ -34,11 +35,11 @@ class DeployZilch
     private function validateRequest(): void
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            throw new Exception("This script only accepts POST requests.");
+            throw new \Exception("This script only accepts POST requests.");
         }
 
         if (empty($this->downloadUrl) || !filter_var($this->downloadUrl, FILTER_VALIDATE_URL)) {
-            throw new Exception("Missing or invalid 'downloadUrl' parameter.");
+            throw new \Exception("Missing or invalid 'downloadUrl' parameter.");
         }
     }
 
@@ -48,7 +49,7 @@ class DeployZilch
         $serverRoot = $this->getRootDomain('https://' . $_SERVER['SERVER_NAME']);
 
         if ($downloadRoot !== $serverRoot) {
-            throw new Exception("The provided URL does not match the server's root domain. Expected: $serverRoot, Got: $downloadRoot");
+            throw new \Exception("The provided URL does not match the server's root domain. Expected: $serverRoot, Got: $downloadRoot");
         }
     }
 
@@ -66,7 +67,7 @@ class DeployZilch
         ]);
 
         if (!curl_exec($ch) || curl_errno($ch)) {
-            throw new Exception("Error downloading the ZIP file: " . curl_error($ch));
+            throw new \Exception("Error downloading the ZIP file: " . curl_error($ch));
         }
 
         curl_close($ch);
@@ -79,7 +80,7 @@ class DeployZilch
         }
 
         if (!mkdir($this->backupDir, 0755, true)) {
-            throw new Exception("Failed to create backup directory: $this->backupDir");
+            throw new \Exception("Failed to create backup directory: $this->backupDir");
         }
 
         foreach (glob($this->targetDir . DIRECTORY_SEPARATOR . '*') as $file) {
@@ -94,12 +95,12 @@ class DeployZilch
 
     private function extractZip(): void
     {
-        $zip = new ZipArchive();
+        $zip = new \ZipArchive();
         if ($zip->open($this->tempZipPath) === true) {
             $zip->extractTo($this->targetDir);
             $zip->close();
         } else {
-            throw new Exception("Failed to unzip the downloaded file.");
+            throw new \Exception("Failed to unzip the downloaded file.");
         }
     }
 
@@ -124,7 +125,7 @@ class DeployZilch
         }
     }
 
-    function getRootDomain(string $url): string
+    private function getRootDomain(string $url): string
     {
         $suffixListUrl = 'https://publicsuffix.org/list/public_suffix_list.dat';
         $cacheFile = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'public_suffix_list.dat';
@@ -133,7 +134,7 @@ class DeployZilch
         if (!file_exists($cacheFile)) {
             $suffixListContent = file_get_contents($suffixListUrl);
             if ($suffixListContent === false) {
-                throw new Exception("Failed to load the Public Suffix List.");
+                throw new \Exception("Failed to load the Public Suffix List.");
             }
             file_put_contents($cacheFile, $suffixListContent);
         } else {
@@ -149,7 +150,7 @@ class DeployZilch
         // Parse the host from the URL
         $host = parse_url($url, PHP_URL_HOST);
         if (!$host) {
-            throw new Exception("Invalid URL: Unable to parse host.");
+            throw new \Exception("Invalid URL: Unable to parse host.");
         }
 
         $hostParts = explode('.', $host);
@@ -173,7 +174,7 @@ try {
     $downloadUrl = $_POST['downloadUrl'] ?? '';
     $deployZilch = new DeployZilch($downloadUrl);
     $deployZilch->run();
-} catch (Exception $e) {
+} catch (\Exception $e) {
     http_response_code(500);
     json_encode(['status' => 'error', 'message' => $e->getMessage()]);
     return 1;

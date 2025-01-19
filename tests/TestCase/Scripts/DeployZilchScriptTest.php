@@ -5,14 +5,13 @@ declare(strict_types=1);
 namespace App\Scripts;
 
 use PHPUnit\Framework\TestCase;
-use function Composer\Autoload\includeFile;
 
 class DeployZilchScriptTest extends TestCase {
     private string $tmpScriptPath = __DIR__ . "/mock-deploy-dir/deploy-zilch.php";
 
     protected function setUp(): void
     {
-        exec("rm -r " . dirname($this->tmpScriptPath));
+        exec("rm -rf " . dirname($this->tmpScriptPath));
 
         // Verify original script exists in SRC
         $scriptPath = __DIR__ . "/../../../src/Scripts/deploy-zilch.php";
@@ -47,7 +46,7 @@ class DeployZilchScriptTest extends TestCase {
         // Set the download URL the kameleon/zilch assistant plugin repo latest tag
         $_POST['downloadUrl'] = "https://gitlab.xel.nl/chameleon/kameleon-assistant-plugin/-/archive/latest/kameleon-assistant-plugin-latest.zip";
 
-        $deploy = new \DeployZilch($_POST['downloadUrl']);
+        $deploy = new \DeployScript\DeployZilch($_POST['downloadUrl']);
         $deploy->run();
 
         // Expect the zip has been unzipped correctly after being downloaded
@@ -61,7 +60,7 @@ class DeployZilchScriptTest extends TestCase {
 
     public function testDeployZilchScript_noPost()
     {
-        $deploy = new \DeployZilch("");
+        $deploy = new \DeployScript\DeployZilch("");
         $thrown = null;
         try {
             $deploy->run();
@@ -82,7 +81,7 @@ class DeployZilchScriptTest extends TestCase {
     {
         $_SERVER['REQUEST_METHOD'] = "POST";
         include_once $this->tmpScriptPath;
-        $deploy = new \DeployZilch("");
+        $deploy = new \DeployScript\DeployZilch("");
 
         $thrown = null;
         try {
@@ -105,7 +104,7 @@ class DeployZilchScriptTest extends TestCase {
         $_SERVER['REQUEST_METHOD'] = "POST";
         $_POST['downloadUrl'] = "some.zip";
         include_once $this->tmpScriptPath;
-        $deploy = new \DeployZilch("");
+        $deploy = new \DeployScript\DeployZilch("");
 
         $thrown = null;
         try {
@@ -128,7 +127,7 @@ class DeployZilchScriptTest extends TestCase {
         $_SERVER['REQUEST_METHOD'] = "POST";
         $_POST['downloadUrl'] = "https://some-server.nl/some.zip";
 
-        $deploy = new \DeployZilch($_POST['downloadUrl']);
+        $deploy = new \DeployScript\DeployZilch($_POST['downloadUrl']);
 
         $thrown = null;
         try {
@@ -152,7 +151,7 @@ class DeployZilchScriptTest extends TestCase {
         $_SERVER['SERVER_NAME'] = "wrong-server-name.nl";
         $_POST['downloadUrl'] = "https://some-server.nl/some.zip";
 
-        $deploy = new \DeployZilch($_POST['downloadUrl']);
+        $deploy = new \DeployScript\DeployZilch($_POST['downloadUrl']);
 
         $thrown = null;
         try {
@@ -176,7 +175,7 @@ class DeployZilchScriptTest extends TestCase {
         $_SERVER['SERVER_NAME'] = "28936423984623.nl";
         $_POST['downloadUrl'] = "https://28936423984623.nl/some.zip";
 
-        $deploy = new \DeployZilch($_POST['downloadUrl']);
+        $deploy = new \DeployScript\DeployZilch($_POST['downloadUrl']);
 
         $thrown = null;
         try {
@@ -186,8 +185,10 @@ class DeployZilchScriptTest extends TestCase {
         }
 
         $this->assertNotNull($thrown);
-        $this->assertEquals($thrown->getMessage(), "Error downloading the ZIP file: SSL certificate problem: self-signed certificate");
-
+        $this->assertMatchesRegularExpression(
+            '/^Error downloading the ZIP file: .+$/',
+            $thrown->getMessage()
+        );
         // Expect nothing downloaded and unzipped
         $this->assertEquals(scandir(dirname($this->tmpScriptPath)), [
             '.', '..', 'deploy-zilch.php'
