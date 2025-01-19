@@ -25,15 +25,11 @@ class DeployZilchScriptTest extends TestCase {
         $this->assertTrue(file_exists($this->tmpScriptPath));
 
         // Include once and clean output buffer
-        ob_start();
         require_once $this->tmpScriptPath;
-        ob_end_clean();
-        ob_start();
     }
 
     protected function tearDown(): void
     {
-        ob_end_clean();
         exec("rm -r " . dirname($this->tmpScriptPath));
     }
 
