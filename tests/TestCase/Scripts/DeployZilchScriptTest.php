@@ -22,15 +22,14 @@ class DeployZilchScriptTest extends TestCase {
         file_put_contents($this->tmpScriptPath, file_get_contents($scriptPath));
 
         // Verify tmp script exists
-        $this->assertTrue(file_exists($this->tmpScriptPath));
+        $this->assertTrue(file_exists($this->tmpScriptPath), "$this->tmpScriptPath doesn't exist");
 
-        // Include once and clean output buffer
         require_once $this->tmpScriptPath;
     }
 
     protected function tearDown(): void
     {
-        exec("rm -r " . dirname($this->tmpScriptPath));
+        exec("rm -rf " . dirname($this->tmpScriptPath));
     }
 
     public function testDeployZilchScript()
@@ -49,7 +48,10 @@ class DeployZilchScriptTest extends TestCase {
         $this->assertFileExists(dirname($this->tmpScriptPath) . DIRECTORY_SEPARATOR . "kameleon-assistant-plugin-latest");
         $this->assertFileExists(dirname($this->tmpScriptPath) . DIRECTORY_SEPARATOR . "kameleon-assistant-plugin-latest" . DIRECTORY_SEPARATOR . "zilch-assistant.php");
 
-        $output = json_decode(ob_get_contents() ?? "", true);
+        // Retrieve everything that was printed by the code under test:
+        $jsonOutput = $this->getActualOutputForAssertion();
+        $output = json_decode($jsonOutput, true);
+
         $this->assertEquals($output["status"] ?? "", "success");
         $this->assertEquals($output["message"] ?? "", "Build has been downloaded and extracted to dir");
     }

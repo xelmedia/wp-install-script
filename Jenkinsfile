@@ -14,7 +14,7 @@ pipeline {
                 // Build test image to run php/composer CLI commands in for building and testing
                 sh """docker build -t zilch-wp-install-script:php-test -f scripts/docker/php-test.Dockerfile ."""
                 // Unit test, lint and build
-                sh """docker run --user appuser --name zilch-wp-install-script-${env.KAMELEON_PIPELINE_TAG} zilch-wp-install-script:php-test /bin/sh -c "cd /var/www/html && resources/composer install && resources/composer test && resources/composer lint-report && resources/composer build" """
+                sh """docker run --user appuser --name zilch-wp-install-script-${env.KAMELEON_PIPELINE_TAG} zilch-wp-install-script:php-test /bin/sh -c "resources/composer install && resources/composer test && resources/composer lint-report && resources/composer build" """
                 // Copy build executable (.phar) from container so it can be used by `ta.sh` script
                 sh """docker cp zilch-wp-install-script-${env.KAMELEON_PIPELINE_TAG}:/var/www/html/zilch-wordpress-install-script.phar ./ """
                 // Run ta
