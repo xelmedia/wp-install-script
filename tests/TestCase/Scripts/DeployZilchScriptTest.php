@@ -22,9 +22,8 @@ class DeployZilchScriptTest extends TestCase {
         file_put_contents($this->tmpScriptPath, file_get_contents($scriptPath));
 
         // Verify tmp script exists
-        $this->assertTrue(file_exists($this->tmpScriptPath));
+        $this->assertTrue(file_exists($this->tmpScriptPath), "$this->tmpScriptPath doesn't exist");
 
-        // Include once and clean output buffer
         require_once $this->tmpScriptPath;
     }
 
