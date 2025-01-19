@@ -43,7 +43,7 @@ class WpInstallServiceTest extends TestCase
 
     protected function tearDown(): void
     {
-        exec("rm -r $this->documentRoot");
+        exec("rm -rf $this->documentRoot");
         Mock::disableAll();
     }
 

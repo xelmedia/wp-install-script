@@ -17,7 +17,7 @@ class DownloadServiceTest extends TestCase {
     }
 
     protected function tearDown(): void {
-        exec("rm -r $this->downloadDir");
+        exec("rm -rf $this->downloadDir");
     }
 
     public function testDownloadWpcliPhar()
