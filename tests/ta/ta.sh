@@ -50,7 +50,7 @@ rm .env
 
 docker cp "$pharFile" $NEW_CONTAINER_ID:/var/www/html/zilch-wordpress-install-script.phar
 
-node_modules/.bin/wp-env run tests-cli php /var/www/html/zilch-wordpress-install-script.phar -p project.com -d domain.com --static-content-dirs=""
+node_modules/.bin/wp-env run tests-cli php /var/www/html/zilch-wordpress-install-script.phar -p project.com -d domain.com --admin-email="email@zilch.website" --static-content-dirs=""
 
 # Run the test script
 php test-zilch-wordpress-install-script.php

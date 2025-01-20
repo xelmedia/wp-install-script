@@ -53,9 +53,10 @@ class WpInstallService
      * wordpress folder, env file, WPResources directory and the script itself
      * @param $domainName
      * @param $projectName
+     * @param $adminEmail
      * @return void
      */
-    public function installWpScripts($domainName, $projectName): void
+    public function installWpScripts($domainName, $projectName, $adminEmail): void
     {
         try {
             ob_start();
@@ -67,7 +68,7 @@ class WpInstallService
 
             $this->composerCommandService->installBedrock();
 
-            $this->wpCommandService->executeWpCoreInstall($domainName, $projectName);
+            $this->wpCommandService->executeWpCoreInstall($domainName, $projectName, $adminEmail);
             $this->wpCommandService->executeWpReWrite();
             $this->wpCommandService->executeWpLanguageCommands();
         } catch (Error|Exception|Throwable $e) {

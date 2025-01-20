@@ -52,7 +52,7 @@ class WPCommandServiceTest extends TestCase
         $this->commandExecutor->expects(self::once())
             ->method('execOrFail')
             ->with("$this->phpBin $this->pharFilePath core install --url='some-domain.nl' --title='my project' --admin_user=zilch-admin --admin_email='email@zilch.website'");
-        $this->commandExecutorService->executeWpCoreInstall("some-domain.nl", "my project");
+        $this->commandExecutorService->executeWpCoreInstall("some-domain.nl", "my project", "email@zilch.website");
     }
 
     public function testExecuteWpLanguageCommands()
