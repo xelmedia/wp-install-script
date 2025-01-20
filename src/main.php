@@ -17,6 +17,7 @@ function getOptions(): array|bool
             "projectName:",
             "domainName:",
             "environment:",
+            "admin-email:",
             "static-content-dirs:",
         ]
     );
@@ -27,8 +28,13 @@ $options = getOptions();
 $projectName = $options['p'] ?? $options['projectName'] ?? null;
 $domainName = $options['d'] ?? $options['domainName'] ?? null;
 $environment = $options['e'] ?? $options['environment'] ?? "development";
+$adminEmail = $options['admin-email'] ?? null;
 $staticContentDirs = $options['static-content-dirs'] ?? '';
 
+if (!str_contains($adminEmail ?? "", "@")) {
+    echo "Given argument --admin-email is not a valid email address: $adminEmail";
+    exit(1);
+}
 if (!$domainName || !$projectName) {
     echo "Usage: php zilch-wordpress-install-script.php -p <projectName> -d <domainName> -e <environment> " .
         "--static-content-dirs=<dir1,dir2>" . PHP_EOL;
@@ -37,7 +43,7 @@ if (!$domainName || !$projectName) {
 $pharFile = Phar::running(false);
 $documentRoot = dirname($pharFile);
 $wpInstaller = new WpInstallService($documentRoot, $environment);
-$wpInstaller->installWpScripts($domainName, $projectName);
+$wpInstaller->installWpScripts($domainName, $projectName, $adminEmail);
 
 $staticContentDirs = explode(",", $staticContentDirs);
 $tag = PACKAGE_VERSION;

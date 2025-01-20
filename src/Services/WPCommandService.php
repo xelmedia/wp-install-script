@@ -4,9 +4,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Services\Helpers\CommandExecutor;
-use App\Services\Helpers\FileHelper;
 use Exception;
-use Throwable;
 
 class WPCommandService
 {
@@ -58,9 +56,8 @@ class WPCommandService
      * @return void
      * @throws Exception
      */
-    public function executeWpCoreInstall($domainName, $projectName): void
+    public function executeWpCoreInstall($domainName, $projectName, $adminEmail): void
     {
-        $adminEmail = "email@zilch.website";
         $command = 'core install --url=' . escapeshellarg($domainName) . ' --title=' . escapeshellarg($projectName) . ' --admin_user=zilch-admin ' . '--admin_email=' . escapeshellarg($adminEmail);
         $this->executeWPCommand($command, "Something went wrong while installing wordpress core for the given domain name: $domainName");
     }

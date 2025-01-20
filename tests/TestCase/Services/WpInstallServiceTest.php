@@ -74,7 +74,7 @@ class WpInstallServiceTest extends TestCase
 
         $this->wpCommandService->expects(self::once())
             ->method("executeWpCoreInstall")
-            ->with("d", "p");
+            ->with("d", "p", "email@zilch.website");
 
         $this->wpCommandService->expects(self::once())
             ->method("executeWpReWrite");
@@ -83,7 +83,7 @@ class WpInstallServiceTest extends TestCase
             ->method("executeWpLanguageCommands");
 
         ob_start();
-        $this->wpInstallService->installWpScripts("d", "p");
+        $this->wpInstallService->installWpScripts("d", "p", "email@zilch.website");
         ob_end_flush();
         ob_get_clean();
     }
@@ -125,7 +125,7 @@ class WpInstallServiceTest extends TestCase
             ->willThrowException(new Error("Wrong url", 500));
 
         ob_start();
-        $this->wpInstallService->installWpScripts("d", "p");
+        $this->wpInstallService->installWpScripts("d", "p", "email@zilch.website");
 
         // Expect only the .env files exist and other files to be cleaner up after failure
         foreach ($expectExistsFiles as $expectExistsFile) {
