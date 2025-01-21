@@ -10,6 +10,9 @@ The **WP Install Script** automates setting up a WordPress environment using **B
 - **Running WP-CLI commands** to install WordPress core, languages, and rewrite rules.
 - **Error handling and cleanup** to avoid partial installs.
 
+Script optionally accepts, using STDIN, a GitHub access token, so required files can be downloaded from GitHub.
+If no Access token is provided, requests to GitHub will be done without and might cause rate limiting issues.
+
 ## Key Components
 
 1. **`DownloadService`**
