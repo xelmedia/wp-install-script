@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Services\Helpers\FileHelper;
 use Exception;
 use Throwable;
+use Xel\Common\Exception\ServiceException;
 
 class DownloadService
 {
@@ -64,21 +65,27 @@ class DownloadService
         }
     }
 
-    protected function getContentFromGitApiResponse(mixed $content): string
+    public function getContentFromGitApiResponse(mixed $value): string
     {
-        $content = is_string($content) ? $content : '';
+        $content = is_string($value) ? $value : '';
 
         $contentArray = json_decode($content, true);
         if (json_last_error() !== JSON_ERROR_NONE || !is_array($contentArray)) {
-            return $content;
+            $contentArray = [];
         }
 
-        $content = $contentArray['content'] ?? $content;
-        return $this->isBase64($content) ? base64_decode($content) : $content;
+        $content = $contentArray['content'] ?? '';
+        $content = $this->isBase64($content) ? base64_decode($content) : null;
+        if (empty($content)) {
+            throw new Exception("Unable to decode Github API response. " .
+                "Either invalid response, or has no base64 encoded 'content' entry in the JSON response: " .
+                "\n - " . json_encode($value));
+        }
+        return $content;
     }
 
     protected function isBase64($string): bool
     {
-        return (bool) base64_decode($string, true);
+        return base64_encode(base64_decode($string, true)) === $string;
     }
 }

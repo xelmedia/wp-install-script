@@ -35,4 +35,64 @@ class DownloadServiceTest extends TestCase {
         $this->assertTrue(file_exists($pharPath));
         $this->assertStringContainsString("Composer version", exec("$pharPath --version"));
     }
+
+    public function testGetContentsFromResponse_noString()
+    {
+        $thrown = null;
+        try {
+            $result = [];
+            $this->downloadService->getContentFromGitApiResponse($result);
+        } catch (\Throwable $e) {
+            $thrown = $e;
+        }
+        self::assertNotNull($thrown);
+        self::assertStringContainsString('Unable to decode Github API response.', $thrown->getMessage());
+    }
+
+    public function testGetContentsFromResponse_invalidString()
+    {
+        $thrown = null;
+        try {
+            $result = 'some string';
+            $this->downloadService->getContentFromGitApiResponse($result);
+        } catch (\Throwable $e) {
+            $thrown = $e;
+        }
+        self::assertNotNull($thrown);
+        self::assertStringContainsString('Unable to decode Github API response.', $thrown->getMessage());
+    }
+
+    public function testGetContentsFromResponse_noContentInJson()
+    {
+        $thrown = null;
+        try {
+            $result = '{"someKey":"someVal"}';
+            $this->downloadService->getContentFromGitApiResponse($result);
+        } catch (\Throwable $e) {
+            $thrown = $e;
+        }
+        self::assertNotNull($thrown);
+        self::assertStringContainsString('Unable to decode Github API response.', $thrown->getMessage());
+    }
+
+    public function testGetContentsFromResponse_contentInJsonNotBase64()
+    {
+
+        $thrown = null;
+        try {
+            $result = '{"content":"hoi"}';
+            $this->downloadService->getContentFromGitApiResponse($result);
+        } catch (\Throwable $e) {
+            $thrown = $e;
+        }
+        self::assertNotNull($thrown);
+        self::assertStringContainsString('Unable to decode Github API response.', $thrown->getMessage());
+    }
+
+    public function testGetContentsFromResponse()
+    {
+        $result = '{"content":"'. base64_encode("my-encoded-val") . '"}';
+        $response = $this->downloadService->getContentFromGitApiResponse($result);
+        self::assertEquals("my-encoded-val", $response);
+    }
 }
