@@ -47,6 +47,8 @@ class CommandExecutor
             $stdIn = fgets(STDIN);
             if (is_string($stdIn)) {
                 $stdIn = trim($stdIn);
+            } else {
+                $stdIn = '';
             }
             return strlen($stdIn) > 0 ? $stdIn : null;
         }
