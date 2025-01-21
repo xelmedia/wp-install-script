@@ -52,18 +52,17 @@ class GithubDownloadService
                 ];
                 $context = stream_context_create($options);
             }
-
-            FileHelper::createDir(dirname($filePath));
             $content = file_get_contents($url, false, $context);
 
             $filePaths = is_string($filePath) ? [$filePath] : $filePath;
-            foreach ($filePaths as $filePath) {
-                if (file_put_contents($filePath, $content) !== false) {
-                    chmod($filePath, 0755);
+            foreach ($filePaths as $destination) {
+                FileHelper::createDir(dirname($destination));
+                if (file_put_contents($destination, $content) !== false) {
+                    chmod($destination, 0755);
                 }
             }
         } catch (Throwable $e) {
-            throw new Exception("Something went wrong while downloading wp phar file", 500);
+            throw new Exception("Something went wrong while downloading: $url\n - {$e->getMessage()}", 500);
         }
     }
 }

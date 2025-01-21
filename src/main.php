@@ -51,16 +51,18 @@ $wpInstaller = new WpInstallService($documentRoot, $environment, $gitDownloadSer
 $wpInstaller->installWpScripts($domainName, $projectName, $adminEmail);
 
 // Write deploy scripts to static content dirs
-$staticContentDirs = explode(",", $staticContentDirs);
-$tag = PACKAGE_VERSION;
-$externalFileUrl = "https://raw.githubusercontent.com/xelmedia/wp-install-script/$tag/src/scripts/deploy-zilch.php";
+if (!empty($staticContentDirs)) {
+    try {
+        $staticContentDirs = array_map(fn($dir) => "$dir/deploy-zilch.php", explode(",", $staticContentDirs));
+        $tag = PACKAGE_VERSION;
+        $externalFileUrl = "https://raw.githubusercontent.com/xelmedia/wp-install-script/$tag/src/Scripts/deploy-zilch.php";
 
-try {
-    $gitDownloadService->downloadFile($externalFileUrl, $staticContentDirs);
-} catch (\Throwable $t) {
-    echo "Failed to write the file to: " . implode(",", $staticContentDirs);
-    echo "\n -> {$t->getMessage()}";
-    exit(1);
+        $gitDownloadService->downloadFile($externalFileUrl, $staticContentDirs);
+    } catch (\Throwable $t) {
+        echo "Failed to write the file to: " . implode(",", $staticContentDirs);
+        echo "\n -> {$t->getMessage()}";
+        exit(1);
+    }
 }
 
 $wpInstaller->cleanUpScript();
