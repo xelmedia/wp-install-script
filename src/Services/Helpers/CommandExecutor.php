@@ -43,13 +43,9 @@ class CommandExecutor
 
         // Wait for input on STDIN with a timeout
         $ready = stream_select($read, $write, $except, $timeoutSeconds);
-
         if ($ready > 0) {
-            // Input is available, read the first line and return it
-            return strlen($result = trim(fgets(STDIN))) > 0 ? $result : null;
+            return strlen($result = trim(fgets(STDIN) ?? "")) > 0 ? $result : null;
         }
-
-        // Timeout occurred
         return null;
     }
 }
