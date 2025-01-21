@@ -74,7 +74,6 @@ class WpInstallService
         } catch (Error|Exception|Throwable $e) {
             $this->cleanUpScript(true);
             $this->wpInstallHelper->generateResponse($e);
-            return;
         }
         $this->wpInstallHelper->generateResponse();
     }
