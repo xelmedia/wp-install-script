@@ -31,12 +31,12 @@ class ComposerCommandService
     public function installBedrock(string|null $gitToken = null): void
     {
         $gitHost = ($gitToken && strlen($gitToken) > 0) ? "$gitToken@github.com" : "github.com";
-        $repository = "'{\"type\":\"vcs\", \"url\":\"https:/$gitHost/xelmedia/bedrock-headless-zilch.git\"}'";
+        $repository = "'{\"type\":\"vcs\", \"url\":\"https://$gitHost/xelmedia/bedrock-headless-zilch.git\"}'";
         $bedrockPath = $this->wordpressPath . "/bedrock";
         $command = "$this->phpBin $this->pharFilePath create-project --repository=$repository roots/bedrock $this->wordpressPath/bedrock";
         $this->cmdExec->execOrFail($command, "Bedrock was not installed successfully");
 
-        $this->cmdExec->execOrFail("mv -f $bedrockPath/* $bedrockPath/.* $this->wordpressPath", "Moving bedrock failed");
+        $this->cmdExec->execOrFail("mv -f $bedrockPath/* $bedrockPath/.[!.]* $this->wordpressPath", "Moving bedrock failed");
         if (!FileHelper::pathExists($this->wordpressPath . "/web")) {
             throw new Exception("The wordpress core was not downloaded successfully", 500);
         }

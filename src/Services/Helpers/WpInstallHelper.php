@@ -43,7 +43,7 @@ class WpInstallHelper
             ];
         }
         ob_clean();
-        header('Content-Type: application/json; charset=utf-8');
+        @header('Content-Type: application/json; charset=utf-8');
         echo json_encode($data) . "\n";
         if ($error) {
             $this->exitWrapper->exit($error->getCode());
