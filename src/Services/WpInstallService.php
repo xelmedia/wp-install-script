@@ -17,17 +17,17 @@ class WpInstallService
     private string $composerPharFilePath;
 
     private string $environment;
-    private DownloadService $downloadService;
+    private GithubDownloadService $downloadService;
     private WPCommandService $wpCommandService;
     private ComposerCommandService $composerCommandService;
 
     private WpInstallHelper $wpInstallHelper;
     public function __construct(
-        string $documentRoot,
-        string $runLevel,
-        ?DownloadService $downloadService = null,
-        ?WPCommandService $wpCommandService = null,
-        ?WpInstallHelper $wpInstallHelper = null,
+        string                  $documentRoot,
+        string                  $runLevel,
+        ?GithubDownloadService  $downloadService = null,
+        ?WPCommandService       $wpCommandService = null,
+        ?WpInstallHelper        $wpInstallHelper = null,
         ?ComposerCommandService $composerCommandService = null,
     ) {
         $this->documentRoot = $documentRoot;
@@ -36,7 +36,7 @@ class WpInstallService
         $this->composerPharFilePath = "$this->pharFileDirectory/composer.phar";
 
         $this->environment = $runLevel;
-        $this->downloadService = $downloadService ?? new DownloadService();
+        $this->downloadService = $downloadService ?? new GithubDownloadService();
         $this->wpCommandService = $wpCommandService
             ?? new WPCommandService(PHP_BINARY, $this->wpcliPharFilePath, $this->documentRoot);
 
@@ -54,9 +54,10 @@ class WpInstallService
      * @param $domainName
      * @param $projectName
      * @param $adminEmail
+     * @param string|null $gitAccessToken
      * @return void
      */
-    public function installWpScripts($domainName, $projectName, $adminEmail): void
+    public function installWpScripts($domainName, $projectName, $adminEmail, string $gitAccessToken = null): void
     {
         try {
             ob_start();
@@ -66,7 +67,7 @@ class WpInstallService
             $this->downloadService->downloadPharFile($this->wpcliPharFilePath);
             $this->downloadService->downloadComposerPharFile($this->composerPharFilePath);
 
-            $this->composerCommandService->installBedrock();
+            $this->composerCommandService->installBedrock($gitAccessToken);
 
             $this->wpCommandService->executeWpCoreInstall($domainName, $projectName, $adminEmail);
             $this->wpCommandService->executeWpReWrite();
@@ -74,6 +75,7 @@ class WpInstallService
         } catch (Error|Exception|Throwable $e) {
             $this->cleanUpScript(true);
             $this->wpInstallHelper->generateResponse($e);
+            return;
         }
         $this->wpInstallHelper->generateResponse();
     }

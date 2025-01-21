@@ -28,11 +28,12 @@ class ComposerCommandService
      * Throws an error if the wordpress directory doesnt exists at defined the wordpress path
      * @throws Exception
      */
-    public function installBedrock(): void
+    public function installBedrock(string|null $gitToken = null): void
     {
-        $respository = "'{\"type\":\"vcs\", \"url\":\"https://github.com/xelmedia/bedrock-headless-zilch.git\"}'";
+        $gitHost = ($gitToken && strlen($gitToken) > 0) ? "$gitToken@github.com" : "github.com";
+        $repository = "'{\"type\":\"vcs\", \"url\":\"https:/$gitHost/xelmedia/bedrock-headless-zilch.git\"}'";
         $bedrockPath = $this->wordpressPath . "/bedrock";
-        $command = "$this->phpBin $this->pharFilePath create-project --repository=$respository roots/bedrock $this->wordpressPath/bedrock";
+        $command = "$this->phpBin $this->pharFilePath create-project --repository=$repository roots/bedrock $this->wordpressPath/bedrock";
         $this->cmdExec->execOrFail($command, "Bedrock was not installed successfully");
 
         $this->cmdExec->execOrFail("mv -f $bedrockPath/* $bedrockPath/.* $this->wordpressPath", "Moving bedrock failed");
