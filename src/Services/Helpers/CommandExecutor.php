@@ -11,7 +11,13 @@ class CommandExecutor
         if ($output) {
             return $this->execOutput($command);
         }
-        return exec($command);
+        $output = [];
+        $resultCode = 0;
+        exec($command, $output, $resultCode);
+        if ($resultCode > 0) {
+            throw new \Exception("Command failed: $command\n - " . implode("\n - ", $output), $resultCode);
+        }
+        return $output;
     }
 
     private function execOutput(string $command): array
@@ -27,5 +33,23 @@ class CommandExecutor
         if ($result === false) {
             throw new \Exception($errorMessage ?? "Something went wrong executing the command: $command", $code ?? 500);
         }
+    }
+
+    public static function getStdinInputWithTimeout(int $timeoutSeconds): ?string
+    {
+        $read = [STDIN];
+        $write = null;
+        $except = null;
+
+        // Wait for input on STDIN with a timeout
+        $ready = stream_select($read, $write, $except, $timeoutSeconds);
+
+        if ($ready > 0) {
+            // Input is available, read the first line and return it
+            return strlen($result = trim(fgets(STDIN))) > 0 ? $result : null;
+        }
+
+        // Timeout occurred
+        return null;
     }
 }

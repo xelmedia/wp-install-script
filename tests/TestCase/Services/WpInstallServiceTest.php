@@ -14,7 +14,7 @@ class WpInstallServiceTest extends TestCase
 {
     private string $documentRoot;
     private string $runLevel;
-    private DownloadService|MockObject $downloadService;
+    private GithubDownloadService|MockObject $downloadService;
     private WPCommandService|MockObject $wpCommandService;
     private WpInstallHelper|MockObject $wpInstallHelper;
     private ComposerCommandService|MockObject $composerCommandService;
@@ -24,7 +24,7 @@ class WpInstallServiceTest extends TestCase
     protected function setUp(): void
     {
         Mock::disableAll();
-        $this->downloadService = $this->createMock(DownloadService::class);
+        $this->downloadService = $this->createMock(GithubDownloadService::class);
         $this->wpCommandService = $this->createMock(WPCommandService::class);
         $this->wpInstallHelper = $this->createMock(WpInstallHelper::class);
         $this->composerCommandService = $this->createMock(ComposerCommandService::class);

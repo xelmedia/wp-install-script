@@ -5,6 +5,8 @@ namespace App;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
+use App\Services\GithubDownloadService;
+use App\Services\Helpers\CommandExecutor;
 use App\Services\WpInstallService;
 use Phar;
 
@@ -22,8 +24,9 @@ function getOptions(): array|bool
         ]
     );
 }
-
 $options = getOptions();
+echo "Please enter Git access token, or proceed without which might cause rate limit issues:\n > ";
+$gitAccessToken = CommandExecutor::getStdinInputWithTimeout(20);
 
 $projectName = $options['p'] ?? $options['projectName'] ?? null;
 $domainName = $options['d'] ?? $options['domainName'] ?? null;
@@ -40,21 +43,24 @@ if (!$domainName || !$projectName) {
         "--static-content-dirs=<dir1,dir2>" . PHP_EOL;
     exit(1);
 }
+
+$gitDownloadService = new GithubDownloadService($gitAccessToken);
 $pharFile = Phar::running(false);
 $documentRoot = dirname($pharFile);
-$wpInstaller = new WpInstallService($documentRoot, $environment);
+$wpInstaller = new WpInstallService($documentRoot, $environment, $gitDownloadService);
 $wpInstaller->installWpScripts($domainName, $projectName, $adminEmail);
 
+// Write deploy scripts to static content dirs
 $staticContentDirs = explode(",", $staticContentDirs);
 $tag = PACKAGE_VERSION;
 $externalFileUrl = "https://raw.githubusercontent.com/xelmedia/wp-install-script/$tag/src/scripts/deploy-zilch.php";
 
-$fileContents = file_get_contents($externalFileUrl);
-foreach ($staticContentDirs as $staticContentDir) {
-    if (file_put_contents($staticContentDir . "/deploy-zilch.php", $fileContents) === false) {
-        echo "Failed to write the file to: {$staticContentDir}";
-        exit(1);
-    }
+try {
+    $gitDownloadService->downloadFile($externalFileUrl, $staticContentDirs);
+} catch (\Throwable $t) {
+    echo "Failed to write the file to: " . implode(",", $staticContentDirs);
+    echo "\n -> {$t->getMessage()}";
+    exit(1);
 }
 
 $wpInstaller->cleanUpScript();

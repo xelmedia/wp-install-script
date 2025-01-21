@@ -6,8 +6,13 @@ use App\Services\Helpers\FileHelper;
 use Exception;
 use Throwable;
 
-class DownloadService
+class GithubDownloadService
 {
+
+    public function __construct(private readonly string|null $token = null)
+    {
+    }
+
     /**
      * Downloads a wp-cli.phar files that will help executing wordpress commands
      * @throws Exception
@@ -28,18 +33,34 @@ class DownloadService
      * Downloads a file given from the given url and places it at the given path
      * It creates the path directory if it does not exist
      * @param string $url
-     * @param string $filePath
-     * @param string $dirPath
+     * @param string|array $filePath
      * @return void
      * @throws Exception
      */
-    private function downloadFile(string $url, string $filePath): void
+    public function downloadFile(string $url, string|array $filePath): void
     {
         try {
+            $context = null;
+            if (strlen($this->token ?? "") > 0) {
+                $options = [
+                    "http" => [
+                        "header" => [
+                            "Authorization: Bearer $this->token",
+                            "User-Agent: PHP-Request" // GitHub requires a User-Agent header
+                        ]
+                    ]
+                ];
+                $context = stream_context_create($options);
+            }
+
             FileHelper::createDir(dirname($filePath));
-            $content = file_get_contents($url);
-            if (file_put_contents($filePath, $content) !== false) {
-                chmod($filePath, 0755);
+            $content = file_get_contents($url, false, $context);
+
+            $filePaths = is_string($filePath) ? [$filePath] : $filePath;
+            foreach ($filePaths as $filePath) {
+                if (file_put_contents($filePath, $content) !== false) {
+                    chmod($filePath, 0755);
+                }
             }
         } catch (Throwable $e) {
             throw new Exception("Something went wrong while downloading wp phar file", 500);
