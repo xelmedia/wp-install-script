@@ -1,5 +1,5 @@
 {
-  "version": "2.2.5",
+  "version": "2.2.6",
   "name": "zilch/wp-install-script",
   "description": "A script for installing WordPress with various plugins and configurations.",
   "type": "project",
