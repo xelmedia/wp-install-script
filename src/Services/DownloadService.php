@@ -48,6 +48,9 @@ class DownloadService
                 $context = stream_context_create($options);
             }
             $content = file_get_contents($url, false, $context);
+            if (!empty($bearerToken)) {
+                $content = $this->getContentFromGitApiResponse($content);
+            }
 
             $filePaths = is_string($filePath) ? [$filePath] : $filePath;
             foreach ($filePaths as $destination) {
@@ -59,5 +62,23 @@ class DownloadService
         } catch (Throwable $e) {
             throw new Exception("Something went wrong while downloading: $url\n - {$e->getMessage()}", 500);
         }
+    }
+
+    protected function getContentFromGitApiResponse(mixed $content): string
+    {
+        $content = is_string($content) ? $content : '';
+
+        $contentArray = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE || !is_array($contentArray)) {
+            return $content;
+        }
+
+        $content = $contentArray['content'] ?? $content;
+        return $this->isBase64($content) ? base64_decode($content) : $content;
+    }
+
+    protected function isBase64($string): bool
+    {
+        return (bool) base64_decode($string, true);
     }
 }
