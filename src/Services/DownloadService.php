@@ -6,13 +6,8 @@ use App\Services\Helpers\FileHelper;
 use Exception;
 use Throwable;
 
-class GithubDownloadService
+class DownloadService
 {
-
-    public function __construct(private readonly string|null $token = null)
-    {
-    }
-
     /**
      * Downloads a wp-cli.phar files that will help executing wordpress commands
      * @throws Exception
@@ -34,20 +29,20 @@ class GithubDownloadService
      * It creates the path directory if it does not exist
      * @param string $url
      * @param string|array $filePath
+     * @param string|null $bearerToken
      * @return void
      * @throws Exception
      */
-    public function downloadFile(string $url, string|array $filePath): void
+    public function downloadFile(string $url, string|array $filePath, string $bearerToken = null): void
     {
         try {
             $context = null;
-            if (strlen($this->token ?? "") > 0) {
+            if ($bearerToken && strlen($bearerToken) > 0) {
                 $options = [
                     "http" => [
-                        "header" => [
-                            "Authorization: Bearer $this->token",
-                            "User-Agent: PHP-Request" // GitHub requires a User-Agent header
-                        ]
+                        "header" =>
+                            "Authorization: Bearer $bearerToken\r\n" .
+                            "User-Agent: PHP-Request\r\n"
                     ]
                 ];
                 $context = stream_context_create($options);

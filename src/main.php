@@ -5,7 +5,7 @@ namespace App;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use App\Services\GithubDownloadService;
+use App\Services\DownloadService;
 use App\Services\Helpers\CommandExecutor;
 use App\Services\WpInstallService;
 use Phar;
@@ -44,20 +44,23 @@ if (!$domainName || !$projectName) {
     exit(1);
 }
 
-$gitDownloadService = new GithubDownloadService($gitAccessToken);
+$gitDownloadService = new DownloadService();
 $pharFile = Phar::running(false);
 $documentRoot = dirname($pharFile);
 $wpInstaller = new WpInstallService($documentRoot, $environment, $gitDownloadService);
-$wpInstaller->installWpScripts($domainName, $projectName, $adminEmail);
+$wpInstaller->installWpScripts($domainName, $projectName, $adminEmail, $gitAccessToken);
 
 // Write deploy scripts to static content dirs
 if (!empty($staticContentDirs)) {
     try {
         $staticContentDirs = array_map(fn($dir) => "$dir/deploy-zilch.php", explode(",", $staticContentDirs));
         $tag = PACKAGE_VERSION;
-        $externalFileUrl = "https://raw.githubusercontent.com/xelmedia/wp-install-script/$tag/src/Scripts/deploy-zilch.php";
+        // Use API when using git token for downloading zilch deploy script
+        $externalFileUrl = $gitAccessToken
+            ? "https://api.github.com/repos/xelmedia/wp-install-script/contents/src/Scripts/deploy-zilch.php?ref=$tag"
+            : "https://raw.githubusercontent.com/xelmedia/wp-install-script/$tag/src/Scripts/deploy-zilch.php";
 
-        $gitDownloadService->downloadFile($externalFileUrl, $staticContentDirs);
+        $gitDownloadService->downloadFile($externalFileUrl, $staticContentDirs, $gitAccessToken);
     } catch (\Throwable $t) {
         echo "Failed to write the file to: " . implode(",", $staticContentDirs);
         echo "\n -> {$t->getMessage()}";
