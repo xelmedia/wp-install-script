@@ -10,10 +10,10 @@ class DownloadServiceTest extends TestCase {
     private $wpcliPharName = "wp-cli.phar";
     private $composerPharName = "composer.phar";
     private $downloadDir = __DIR__ . DIRECTORY_SEPARATOR . "mock-doc-root";
-    private GithubDownloadService $downloadService;
+    private DownloadService $downloadService;
 
     protected function setUp(): void {
-        $this->downloadService = new GithubDownloadService();
+        $this->downloadService = new DownloadService();
     }
 
     protected function tearDown(): void {

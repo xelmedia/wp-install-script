@@ -17,7 +17,7 @@ class WpInstallService
     private string $composerPharFilePath;
 
     private string $environment;
-    private GithubDownloadService $downloadService;
+    private DownloadService $downloadService;
     private WPCommandService $wpCommandService;
     private ComposerCommandService $composerCommandService;
 
@@ -25,7 +25,7 @@ class WpInstallService
     public function __construct(
         string                  $documentRoot,
         string                  $runLevel,
-        ?GithubDownloadService  $downloadService = null,
+        ?DownloadService        $downloadService = null,
         ?WPCommandService       $wpCommandService = null,
         ?WpInstallHelper        $wpInstallHelper = null,
         ?ComposerCommandService $composerCommandService = null,
@@ -36,7 +36,7 @@ class WpInstallService
         $this->composerPharFilePath = "$this->pharFileDirectory/composer.phar";
 
         $this->environment = $runLevel;
-        $this->downloadService = $downloadService ?? new GithubDownloadService();
+        $this->downloadService = $downloadService ?? new DownloadService();
         $this->wpCommandService = $wpCommandService
             ?? new WPCommandService(PHP_BINARY, $this->wpcliPharFilePath, $this->documentRoot);
 
