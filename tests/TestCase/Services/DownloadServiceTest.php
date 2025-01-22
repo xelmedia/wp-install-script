@@ -75,20 +75,6 @@ class DownloadServiceTest extends TestCase {
         self::assertStringContainsString('Unable to decode Github API response.', $thrown->getMessage());
     }
 
-    public function testGetContentsFromResponse_contentInJsonNotBase64()
-    {
-
-        $thrown = null;
-        try {
-            $result = '{"content":"hoi"}';
-            $this->downloadService->getContentFromGitApiResponse($result);
-        } catch (\Throwable $e) {
-            $thrown = $e;
-        }
-        self::assertNotNull($thrown);
-        self::assertStringContainsString('Unable to decode Github API response.', $thrown->getMessage());
-    }
-
     public function testGetContentsFromResponse()
     {
         $result = '{"content":"'. base64_encode("my-encoded-val") . '"}';

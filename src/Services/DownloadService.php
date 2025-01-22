@@ -74,18 +74,12 @@ class DownloadService
             $contentArray = [];
         }
 
-        $content = $contentArray['content'] ?? '';
-        $content = $this->isBase64($content) ? base64_decode($content) : null;
+        $content = base64_decode($contentArray['content'] ?? '', true);
         if (empty($content)) {
             throw new Exception("Unable to decode Github API response. " .
                 "Either invalid response, or has no base64 encoded 'content' entry in the JSON response: " .
                 "\n - " . json_encode($value));
         }
         return $content;
-    }
-
-    protected function isBase64($string): bool
-    {
-        return base64_encode(base64_decode($string, true)) === $string;
     }
 }
