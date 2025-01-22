@@ -1,4 +1,5 @@
 <?php
+
 namespace DeployScript;
 
 class DeployZilch
@@ -24,11 +25,35 @@ class DeployZilch
             $this->downloadFile();
             $this->backupExistingFiles();
             $this->extractZip();
-            $this->cleanup();
             echo json_encode(['status' => 'success', 'message' => 'Build has been downloaded and extracted to dir']);
         } catch (\Exception $e) {
             $this->restoreBackup();
             throw $e;
+        } finally {
+            $this->purgeVarnish();
+            $this->cleanup();
+        }
+    }
+
+    private function purgeVarnish()
+    {
+
+        try {
+            $hostname = parse_url($this->downloadUrl, PHP_URL_HOST);
+            $serverIp = $_SERVER['SERVER_ADDR'] ?? '127.0.0.1';
+
+            $ch = curl_init();
+
+            curl_setopt($ch, CURLOPT_URL, "http://$serverIp/.*");
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PURGE');
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                "Host: $hostname",
+                "X-Purge-Method: regex"
+            ]);
+
+            curl_exec($ch);
+        } catch (\Throwable $_) {
         }
     }
 
