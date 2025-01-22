@@ -49,9 +49,18 @@ class WPCommandServiceTest extends TestCase
 
     public function testExecuteWpCoreInstall()
     {
-        $this->commandExecutor->expects(self::once())
+        $argsAtInvoke = [
+            "$this->phpBin $this->pharFilePath db clean --yes",
+            "$this->phpBin $this->pharFilePath core install --url='some-domain.nl' --title='my project' --admin_user=zilch-admin --admin_email='email@zilch.website'"
+        ];
+        $invoke = 0;
+        $this->commandExecutor->expects(self::exactly(2))
             ->method('execOrFail')
-            ->with("$this->phpBin $this->pharFilePath core install --url='some-domain.nl' --title='my project' --admin_user=zilch-admin --admin_email='email@zilch.website'");
+            ->with(self::callback(function ($args) use (&$invoke, $argsAtInvoke) {
+                self::assertEquals($argsAtInvoke[$invoke] ?? null, $args);
+                $invoke += 1;
+                return true;
+            }));
         $this->commandExecutorService->executeWpCoreInstall("some-domain.nl", "my project", "email@zilch.website");
     }
 
