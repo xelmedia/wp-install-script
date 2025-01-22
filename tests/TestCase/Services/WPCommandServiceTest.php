@@ -78,7 +78,7 @@ class WPCommandServiceTest extends TestCase
     public function testExecuteWpCoreInstall()
     {
         $argsAtInvoke = [
-            "($this->phpBin $this->pharFilePath core is-installed || (echo \"WP Not installed, proceeding without clearing db\" && false)) && $this->phpBin $this->pharFilePath db clean --yes",
+            "$this->phpBin $this->pharFilePath db clean --yes",
             "$this->phpBin $this->pharFilePath core install --url='some-domain.nl' --title='my project' --admin_user=zilch-admin --admin_email='email@zilch.website'"
         ];
         $invoke = 0;

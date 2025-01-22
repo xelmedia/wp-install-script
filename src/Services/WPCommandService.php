@@ -64,10 +64,11 @@ class WPCommandService
      */
     public function executeWpCoreInstall($domainName, $projectName, $adminEmail): void
     {
-        $commandWpIsInstalled = $this->formatWpCommand("core is-installed");
-        $commandDbClear = "($commandWpIsInstalled || (echo \"WP Not installed, proceeding without clearing db\" && false))"
-            . " && {$this->formatWpCommand('db clean --yes')}";
-        $this->cmdExec->execOrFail($commandDbClear, "Something went wrong while clearing wp-db");
+        try {
+            $this->executeWpCommand('db clean --yes', "Something went wrong while clearing wp-db, proceeding with installation");
+        } catch (\Throwable $t) {
+            echo "\nWARNING: {$t->getMessage()}";
+        }
 
         $command = 'core install --url=' . escapeshellarg($domainName) .
             ' --title=' . escapeshellarg($projectName) .
