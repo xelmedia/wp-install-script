@@ -30,12 +30,40 @@ class WPCommandServiceTest extends TestCase
     public function testExecuteWpReWrite()
     {
         $this->commandExecutor->expects(self::once())
-            ->method("execOrFail")
+            ->method("exec")
             ->with(
                 "cd $this->wordpressPath && $this->phpBin wp rewrite structure '/%postname%/' --hard",
-                "Something went wrong while executing wp rewrite"
             );
         $this->commandExecutorService->executeWpReWrite();
+    }
+
+    public function testExecuteWpReWrite_execFailsButWithSuccessInResult()
+    {
+        $this->commandExecutor->expects(self::once())
+            ->method("exec")
+            ->with(
+                "cd $this->wordpressPath && $this->phpBin wp rewrite structure '/%postname%/' --hard",
+            )
+            ->willThrowException(new \Exception("SOme error message:\n - Success: Rewrite structure set"));
+        $this->commandExecutorService->executeWpReWrite();
+    }
+
+    public function testExecuteWpReWrite_execFails_no_SuccessInResult()
+    {
+        $this->commandExecutor->expects(self::once())
+            ->method("exec")
+            ->with(
+                "cd $this->wordpressPath && $this->phpBin wp rewrite structure '/%postname%/' --hard",
+            )
+            ->willThrowException(new \Exception("SOme error message:\n - Error: Rewrite structure not set"));
+
+        $thrown = null;
+        try {
+            $this->commandExecutorService->executeWpReWrite();
+        } catch (\Throwable $t) {
+            $thrown = $t;
+        }
+        self::assertEquals($thrown?->getMessage(), "Something went wrong while executing wp rewrite");
     }
 
     public function testExecuteWpCommand()
@@ -50,7 +78,7 @@ class WPCommandServiceTest extends TestCase
     public function testExecuteWpCoreInstall()
     {
         $argsAtInvoke = [
-            "$this->phpBin $this->pharFilePath db clean --yes",
+            "($this->phpBin $this->pharFilePath core is-installed || (echo \"WP Not installed, proceeding without clearing db\" && false)) && $this->phpBin $this->pharFilePath db clean --yes",
             "$this->phpBin $this->pharFilePath core install --url='some-domain.nl' --title='my project' --admin_user=zilch-admin --admin_email='email@zilch.website'"
         ];
         $invoke = 0;
