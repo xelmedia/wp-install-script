@@ -30,18 +30,19 @@ class ComposerCommandService
      */
     public function installBedrock(string|null $gitToken = null): void
     {
-        $gitHost = ($gitToken && strlen($gitToken) > 0) ? "$gitToken@github.com" : "github.com";
         $bedrockPath = $this->wordpressPath . "/bedrock";
-
         $repository = "'{
             \"type\": \"package\",
             \"package\": {
                 \"name\": \"xelmedia/bedrock-headless-zilch\",
                 \"version\": \"1.0.0\",
                 \"dist\": {
-                    \"url\": \"https://$gitHost/xelmedia/bedrock-headless-zilch/archive/refs/tags/latest.zip\",
+                    \"url\": \"https://github.com/xelmedia/bedrock-headless-zilch/archive/refs/tags/latest.zip\",
                     \"type\": \"zip\"
                 }
+            },
+            \"extra\": {
+                \"github-oauth\": \"$gitToken\"
             }
         }'";
 
