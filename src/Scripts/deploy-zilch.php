@@ -53,7 +53,8 @@ class DeployZilch
             ]);
 
             curl_exec($ch);
-        } catch (\Throwable $_) {}
+        } catch (\Throwable $_) {
+        }
     }
 
     private function validateRequest(): void
