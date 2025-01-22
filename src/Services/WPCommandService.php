@@ -58,6 +58,9 @@ class WPCommandService
      */
     public function executeWpCoreInstall($domainName, $projectName, $adminEmail): void
     {
+        $commandDbClear = 'db clean --yes';
+        $this->executeWpCommand($commandDbClear, "Something went wrong while clearing wp-db");
+
         $command = 'core install --url=' . escapeshellarg($domainName) . ' --title=' . escapeshellarg($projectName) . ' --admin_user=zilch-admin ' . '--admin_email=' . escapeshellarg($adminEmail);
         $this->executeWPCommand($command, "Something went wrong while installing wordpress core for the given domain name: $domainName");
     }

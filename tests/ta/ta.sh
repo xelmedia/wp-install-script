@@ -48,9 +48,12 @@ echo "$zilchEnvContent" | node_modules/.bin/wp-env run tests-cli tee /var/www/ht
 cat .env | node_modules/.bin/wp-env run tests-cli tee /var/www/html/.env > /dev/null
 rm .env
 
+# Copy the script and execute the install and verify (using test script) the result
 docker cp "$pharFile" $NEW_CONTAINER_ID:/var/www/html/zilch-wordpress-install-script.phar
-
 node_modules/.bin/wp-env run tests-cli php /var/www/html/zilch-wordpress-install-script.phar -p project.com -d domain.com --admin-email="email@zilch.website" --static-content-dirs=""
+php test-zilch-wordpress-install-script.php
 
-# Run the test script
+# RETRY to make sure subsequent installations will succeed
+docker cp "$pharFile" $NEW_CONTAINER_ID:/var/www/html/zilch-wordpress-install-script.phar
+node_modules/.bin/wp-env run tests-cli php /var/www/html/zilch-wordpress-install-script.phar -p project.com -d domain.com --admin-email="email@zilch.website" --static-content-dirs=""
 php test-zilch-wordpress-install-script.php
