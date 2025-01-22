@@ -30,8 +30,14 @@ class WPCommandService
      */
     public function executeWpReWrite(): void
     {
-        $command = "cd $this->wordpressPath && $this->phpBin $this->pharFilePath rewrite structure '/%postname%/' --hard";
-        $this->cmdExec->execOrFail($command, "Something went wrong while executing wp rewrite");
+        try {
+            $command = "cd $this->wordpressPath && $this->phpBin $this->pharFilePath rewrite structure '/%postname%/' --hard";
+            $this->cmdExec->exec($command);
+        } catch (\Throwable $t) {
+            if (!str_contains($t->getMessage(), "Success: Rewrite structure set")) {
+                throw new Exception("Something went wrong while executing wp rewrite", $t->getCode(), $t);
+            }
+        }
     }
 
     /**
@@ -58,10 +64,15 @@ class WPCommandService
      */
     public function executeWpCoreInstall($domainName, $projectName, $adminEmail): void
     {
-        $commandDbClear = 'db clean --yes';
-        $this->executeWpCommand($commandDbClear, "Something went wrong while clearing wp-db");
+        $commandWpIsInstalled = $this->formatWpCommand("core is-installed");
+        $commandDbClear = "($commandWpIsInstalled || (echo \"WP Not installed, proceeding without clearing db\" && false))"
+            . " && {$this->formatWpCommand('db clean --yes')}";
+        $this->cmdExec->execOrFail($commandDbClear, "Something went wrong while clearing wp-db");
 
-        $command = 'core install --url=' . escapeshellarg($domainName) . ' --title=' . escapeshellarg($projectName) . ' --admin_user=zilch-admin ' . '--admin_email=' . escapeshellarg($adminEmail);
+        $command = 'core install --url=' . escapeshellarg($domainName) .
+            ' --title=' . escapeshellarg($projectName) .
+            ' --admin_user=zilch-admin ' . '--admin_email=' . escapeshellarg($adminEmail);
+
         $this->executeWPCommand($command, "Something went wrong while installing wordpress core for the given domain name: $domainName");
     }
 
