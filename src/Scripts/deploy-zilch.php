@@ -85,6 +85,7 @@ class DeployZilch
 
         $ch = curl_init($this->downloadUrl);
         curl_setopt($ch, CURLOPT_FILE, fopen($this->tempZipPath, 'w'));
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_RESOLVE, [
             "$downloadHost:80:$serverIp",
@@ -196,7 +197,8 @@ class DeployZilch
 }
 
 try {
-    $downloadUrl = $_POST['downloadUrl'] ?? '';
+    $entityBody = json_decode(file_get_contents('php://input') ?? "", true) ?? [];
+    $downloadUrl = $_POST['downloadUrl'] ?? $entityBody["downloadUrl"] ?? '';
     $deployZilch = new DeployZilch($downloadUrl);
     $deployZilch->run();
 } catch (\Exception $e) {
