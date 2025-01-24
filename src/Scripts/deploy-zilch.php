@@ -39,7 +39,7 @@ class DeployZilch
     {
 
         try {
-            $hostname = parse_url($this->downloadUrl, PHP_URL_HOST);
+            $hostname = $_SERVER['SERVER_NAME'];
             $serverIp = $_SERVER['SERVER_ADDR'] ?? '127.0.0.1';
 
             $ch = curl_init();
@@ -101,21 +101,55 @@ class DeployZilch
 
     private function backupExistingFiles(): void
     {
-        if (!is_dir($this->targetDir) || count(glob($this->targetDir . DIRECTORY_SEPARATOR . '*')) === 0) {
+        if (!is_dir($this->targetDir)) {
             return;
         }
 
+        // Create a backup directory (wherever you want)
         if (!mkdir($this->backupDir, 0755, true)) {
             throw new \Exception("Failed to create backup directory: $this->backupDir");
         }
 
-        foreach (glob($this->targetDir . DIRECTORY_SEPARATOR . '*') as $file) {
-            $backupPath = $this->backupDir . DIRECTORY_SEPARATOR . basename($file);
-            if ($file === __FILE__ || $file === $this->tempZipPath) {
+        $this->moveDirectoryRecursively($this->targetDir, $this->backupDir);
+    }
+
+    private function moveDirectoryRecursively(string $source, string $destination): void
+    {
+        // Make sure the destination folder exists
+        if (!is_dir($destination) && !mkdir($destination, 0755, true)) {
+            throw new \Exception("Failed to create directory: $destination");
+        }
+
+        $items = scandir($source);
+        if ($items === false) {
+            throw new \Exception("Failed to read directory: $source");
+        }
+
+        foreach ($items as $item) {
+            if ($item === '.' || $item === '..') {
                 continue;
             }
 
-            rename($file, $backupPath);
+            $srcPath = $source . DIRECTORY_SEPARATOR . $item;
+            $destPath = $destination . DIRECTORY_SEPARATOR . $item;
+
+            if ($srcPath === __FILE__) {
+                continue;
+            }
+
+            if (is_dir($srcPath)) {
+                $this->moveDirectoryRecursively($srcPath, $destPath);
+                rmdir($srcPath);
+            } else {
+                // Try rename first (works if on same filesystem)
+                if (!@rename($srcPath, $destPath)) {
+                    // Fallback: copy + unlink
+                    if (!copy($srcPath, $destPath)) {
+                        throw new \Exception("Failed to copy $srcPath to $destPath");
+                    }
+                    unlink($srcPath);
+                }
+            }
         }
     }
 
