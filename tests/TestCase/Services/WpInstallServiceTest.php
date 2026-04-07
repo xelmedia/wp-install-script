@@ -8,7 +8,6 @@ use phpmock\Mock;
 use phpmock\MockBuilder;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use function KevinGH\Box\FileSystem\filename;
 
 class WpInstallServiceTest extends TestCase
 {
@@ -82,6 +81,9 @@ class WpInstallServiceTest extends TestCase
         $this->wpCommandService->expects(self::once())
             ->method("executeWpLanguageCommands");
 
+        $this->wpCommandService->expects(self::once())
+            ->method("executeActivateZilchPlugin");
+
         ob_start();
         $this->wpInstallService->installWpScripts("d", "p", "email@zilch.website");
         ob_end_flush();
@@ -136,7 +138,7 @@ class WpInstallServiceTest extends TestCase
         }
         // Also verify no other files or dirs exist:
         $this->assertEquals(scandir($this->documentRoot), [
-            ".", "..", ...array_map(fn($f) => filename($f), $expectExistsFiles)
+            ".", "..", ...array_map(fn($f) => basename($f), $expectExistsFiles)
         ]);
 
         ob_end_flush();

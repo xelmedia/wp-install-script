@@ -70,6 +70,8 @@ class WpInstallService
             $this->composerCommandService->installBedrock($gitAccessToken);
 
             $this->wpCommandService->executeWpCoreInstall($domainName, $projectName, $adminEmail);
+            $this->wpCommandService->executeActivateZilchPlugin();
+
             $this->wpCommandService->executeWpReWrite();
             $this->wpCommandService->executeWpLanguageCommands();
         } catch (Error|Exception|Throwable $e) {
