@@ -86,4 +86,14 @@ class WPCommandService
         $command = 'language core install nl_NL --activate';
         $this->executeWPCommand($command, "Something went wrong while installing and updating the language");
     }
+
+    /**
+     *  Activate zilch plugin
+     * @throws Exception
+     */
+    public function executeActivateZilchPlugin(): void
+    {
+        $command = 'plugin activate zilch-assistant';
+        $this->executeWPCommand($command, "Something went wrong while activating zilch assistant plugin");
+    }
 }

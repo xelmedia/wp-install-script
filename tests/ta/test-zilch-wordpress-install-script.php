@@ -31,6 +31,13 @@ class WPInstallScriptTest {
             throw new Exception("Nederlands is not installed as a core language");
         }
     }
+
+    private function testZilchAssistantActive(): void {
+        $languages = exec("node_modules/.bin/wp-env run tests-cli wp plugin list --status=active");
+        if(!str_contains($languages, "zilch-assistant")) {
+            throw new Exception("Zilch Assistant plugin is not active");
+        }
+    }
     private function testWPInstallation(): void {
         $url = "http://localhost:8889/wp-admin";
 
@@ -60,6 +67,7 @@ class WPInstallScriptTest {
         $this->testWPInstallation();
         $this->testInstalledPlugins();
         $this->testWPLanguageInstalled();
+        $this->testZilchAssistantActive();
     }
 }
 
