@@ -46,6 +46,9 @@
   },
   "prefer-stable": true,
   "config": {
+    "platform": {
+      "php": "8.2.30"
+    },
     "platform-check": false,
     "sort-packages": true,
     "dealerdirect/phpcodesniffer-composer-installer": true
