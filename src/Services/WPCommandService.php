@@ -8,6 +8,8 @@ use Exception;
 
 class WPCommandService
 {
+    public const ADMIN_USERNAME = 'zilch-admin';
+
     private string $phpBin;
     private string $pharFilePath;
     private string $wordpressPath;
@@ -59,6 +61,7 @@ class WPCommandService
      * and executes wp core install command given the domain name and project name
      * @param $domainName
      * @param $projectName
+     * @param $adminEmail
      * @return void
      * @throws Exception
      */
@@ -72,9 +75,11 @@ class WPCommandService
 
         $command = 'core install --url=' . escapeshellarg($domainName) .
             ' --title=' . escapeshellarg($projectName) .
-            ' --admin_user=zilch-admin ' . '--admin_email=' . escapeshellarg($adminEmail);
+            ' --admin_user=' . self::ADMIN_USERNAME .
+            ' --admin_email=' . escapeshellarg($adminEmail) .
+            ' --skip-email';
 
-        $this->executeWPCommand($command, "Something went wrong while installing wordpress core for the given domain name: $domainName");
+        $this->executeWpCommand($command, "Something went wrong while installing wordpress core for the given domain name: $domainName");
     }
 
     /**
@@ -84,7 +89,7 @@ class WPCommandService
     public function executeWpLanguageCommands(): void
     {
         $command = 'language core install nl_NL --activate';
-        $this->executeWPCommand($command, "Something went wrong while installing and updating the language");
+        $this->executeWpCommand($command, "Something went wrong while installing and updating the language");
     }
 
     /**
@@ -94,6 +99,6 @@ class WPCommandService
     public function executeActivateZilchPlugin(): void
     {
         $command = 'plugin activate zilch-assistant';
-        $this->executeWPCommand($command, "Something went wrong while activating zilch assistant plugin");
+        $this->executeWpCommand($command, "Something went wrong while activating zilch assistant plugin");
     }
 }

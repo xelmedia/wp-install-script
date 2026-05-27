@@ -30,7 +30,7 @@ class WpInstallHelper
      * @param Error|Exception|Throwable|null $error
      * @return void
      */
-    public function generateResponse(Throwable $error = null): void
+    public function generateResponse(?Throwable $error = null): void
     {
         $data = ["responseCode" => 200];
         if ($error) {

@@ -79,7 +79,7 @@ class WPCommandServiceTest extends TestCase
     {
         $argsAtInvoke = [
             "$this->phpBin $this->pharFilePath db clean --yes",
-            "$this->phpBin $this->pharFilePath core install --url='some-domain.nl' --title='my project' --admin_user=zilch-admin --admin_email='email@zilch.website'"
+            "$this->phpBin $this->pharFilePath core install --url='some-domain.nl' --title='my project' --admin_user=zilch-admin --admin_email='email@zilch.website' --skip-email",
         ];
         $invoke = 0;
         $this->commandExecutor->expects(self::exactly(2))

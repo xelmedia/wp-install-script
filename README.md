@@ -63,9 +63,13 @@ Below is the general installation flow as handled in the `WpInstallService` clas
    - This provides a structured WordPress project with a separate `web` directory for the WordPress core.
 
 5. **Run WP-CLI Commands**
-   - **Install WordPress Core**: `executeWpCoreInstall($domainName, $projectName)` sets up the WordPress database and required tables using Bedrock’s structure.
+   - **Install WordPress Core**: `executeWpCoreInstall($domainName, $projectName)` runs `wp core install` with `--skip-email` so WordPress does not email admin credentials (customers use wp-admin password reset instead).
    - **Rewrite Rules**: `executeWpReWrite()` ensures the `.htaccess` or Nginx rewrite rules are set correctly.
    - **Language Commands**: `executeWpLanguageCommands()` installs or updates language packs as needed.
+
+Both install and update require `--backup-folder-path` pointing at the wp-util `backup-{timestamp}/` folder under the document root. That folder is preserved when the install phar wipes the docroot so wp-util can still `revertBackup` on failure.
+
+**Update flow (`--update=true`)** additionally reinstalls Bedrock, restores `web/app/plugins`, `web/app/uploads`, and `web/app/mu-plugins` from that backup, then moves `zilch-assistant` from mu-plugins into `plugins/` when it is not already there (and removes it from mu-plugins). The database (including `active_plugins`) is unchanged—no `wp core install` or `wp core update-db`.
 
 6. **Generate Success or Error Response**
    - If **all steps** are successful, you get a **200**-like response (indicating success).

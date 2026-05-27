@@ -2,6 +2,8 @@
 declare(strict_types=1);
 
 class WPInstallScriptTest {
+    private const UPLOAD_MARKER = '/var/www/html/web/app/uploads/zilch-ta/marker.txt';
+
     private function testInstalledPlugins(): void {
         $plugins = exec("node_modules/.bin/wp-env run tests-cli wp plugin list --format=json");
         $plugins = json_decode($plugins);
@@ -38,6 +40,7 @@ class WPInstallScriptTest {
             throw new Exception("Zilch Assistant plugin is not active");
         }
     }
+
     private function testWPInstallation(): void {
         $url = "http://localhost:8889/wp-admin";
 
@@ -63,14 +66,106 @@ class WPInstallScriptTest {
         }
     }
 
-    public function executeWpInstallScriptsTests() {
+    /**
+     * Seeds plugins/uploads state before --update=true.
+     */
+    public function prepareForUpdate(): void {
+        exec("node_modules/.bin/wp-env run tests-cli wp plugin deactivate zilch-assistant");
+        exec("node_modules/.bin/wp-env run tests-cli wp plugin install contact-form-7 --activate");
+        exec("node_modules/.bin/wp-env run tests-cli wp plugin install wordpress-seo --activate");
+        exec("node_modules/.bin/wp-env run tests-cli wp plugin deactivate wordpress-seo");
+        exec(
+            "node_modules/.bin/wp-env run tests-cli sh -c " . escapeshellarg(
+                'mkdir -p /var/www/html/web/app/uploads/zilch-ta && echo zilch-ta-upload-marker > ' . self::UPLOAD_MARKER
+            )
+        );
+        $marker = exec(
+            "node_modules/.bin/wp-env run tests-cli sh -c " . escapeshellarg('cat ' . self::UPLOAD_MARKER)
+        );
+        if (!str_contains($marker, 'zilch-ta-upload-marker')) {
+            throw new Exception('Upload marker was not created before update');
+        }
+    }
+
+    private function testUpdatePreservesUploads(): void {
+        $marker = exec(
+            "node_modules/.bin/wp-env run tests-cli sh -c " . escapeshellarg(
+                'test -f ' . self::UPLOAD_MARKER . ' && cat ' . self::UPLOAD_MARKER
+            )
+        );
+        if (!str_contains($marker, 'zilch-ta-upload-marker')) {
+            throw new Exception('Uploads were not restored after Bedrock update');
+        }
+    }
+
+    private function testUpdatePluginsExistOnDisk(): void {
+        foreach (['contact-form-7', 'wordpress-seo', 'zilch-assistant'] as $plugin) {
+            $exitCode = 0;
+            exec(
+                "node_modules/.bin/wp-env run tests-cli wp plugin is-installed $plugin 2>/dev/null",
+                $output,
+                $exitCode
+            );
+            if ($exitCode !== 0) {
+                throw new Exception("Plugin $plugin is not installed on disk after update");
+            }
+        }
+    }
+
+    private function testUpdatePluginStatesFromDatabase(): void {
+        $exitCode = 0;
+        exec('node_modules/.bin/wp-env run tests-cli wp plugin is-active contact-form-7 2>/dev/null', $output, $exitCode);
+        if ($exitCode !== 0) {
+            throw new Exception('contact-form-7 should stay active after update');
+        }
+        exec('node_modules/.bin/wp-env run tests-cli wp plugin is-active wordpress-seo 2>/dev/null', $output, $exitCode);
+        if ($exitCode === 0) {
+            throw new Exception('wordpress-seo should stay inactive after update');
+        }
+        exec('node_modules/.bin/wp-env run tests-cli wp plugin is-active zilch-assistant 2>/dev/null', $output, $exitCode);
+        if ($exitCode !== 0) {
+            throw new Exception('zilch-assistant should be active after update');
+        }
+    }
+
+    /**
+     * wp-util removes backup-{timestamp}/ after a successful phar run; ta.sh does the same before these assertions.
+     */
+    private function testUpdateBackupDirRemoved(): void {
+        $leftover = exec(
+            "node_modules/.bin/wp-env run tests-cli sh -c " . escapeshellarg(
+                'ls -d /var/www/html/backup-* 2>/dev/null || true'
+            )
+        );
+        if (trim($leftover) !== '') {
+            throw new Exception('backup-* folder should be removed after update (wp-util cleanup), found: ' . $leftover);
+        }
+    }
+
+    public function executeWpInstallScriptsTests(): void {
         $this->testWPInstallation();
         $this->testInstalledPlugins();
         $this->testWPLanguageInstalled();
         $this->testZilchAssistantActive();
     }
+
+    public function executeWpUpdateTests(): void {
+        $this->testWPInstallation();
+        $this->testUpdatePreservesUploads();
+        $this->testUpdatePluginsExistOnDisk();
+        $this->testUpdatePluginStatesFromDatabase();
+        $this->testUpdateBackupDirRemoved();
+        $this->testWPLanguageInstalled();
+    }
 }
 
 $testClass = new WPInstallScriptTest();
-$testClass->executeWpInstallScriptsTests();
+$mode = $argv[1] ?? 'install';
 
+if ($mode === 'prepare-update') {
+    $testClass->prepareForUpdate();
+} elseif ($mode === 'update') {
+    $testClass->executeWpUpdateTests();
+} else {
+    $testClass->executeWpInstallScriptsTests();
+}

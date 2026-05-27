@@ -21,6 +21,8 @@ function getOptions(): array|bool
             "environment:",
             "admin-email:",
             "static-content-dirs:",
+            "update::",
+            "backup-folder-path:",
         ]
     );
 }
@@ -33,14 +35,23 @@ $domainName = $options['d'] ?? $options['domainName'] ?? null;
 $environment = $options['e'] ?? $options['environment'] ?? "development";
 $adminEmail = $options['admin-email'] ?? null;
 $staticContentDirs = $options['static-content-dirs'] ?? '';
+$isUpdate = filter_var($options['update'] ?? 'false', FILTER_VALIDATE_BOOLEAN);
+$utilBackupFolderPath = $options['backup-folder-path'] ?? null;
+if ($utilBackupFolderPath === '') {
+    $utilBackupFolderPath = null;
+}
 
 if (!str_contains($adminEmail ?? "", "@")) {
     echo "Given argument --admin-email is not a valid email address: $adminEmail";
     exit(1);
 }
-if (!$domainName || !$projectName) {
+if (!$utilBackupFolderPath) {
+    echo "Argument --backup-folder-path is required" . PHP_EOL;
+    exit(1);
+}
+if (!$isUpdate && (!$domainName || !$projectName)) {
     echo "Usage: php zilch-wordpress-install-script.php -p <projectName> -d <domainName> -e <environment> " .
-        "--static-content-dirs=<dir1,dir2>" . PHP_EOL;
+        "--admin-email=<email> --backup-folder-path=<path> --static-content-dirs=<dir1,dir2>" . PHP_EOL;
     exit(1);
 }
 
@@ -48,7 +59,11 @@ $gitDownloadService = new DownloadService();
 $pharFile = Phar::running(false);
 $documentRoot = dirname($pharFile);
 $wpInstaller = new WpInstallService($documentRoot, $environment, $gitDownloadService);
-$wpInstaller->installWpScripts($domainName, $projectName, $adminEmail, $gitAccessToken);
+if ($isUpdate) {
+    $wpInstaller->updateWpScripts($gitAccessToken, $utilBackupFolderPath);
+} else {
+    $wpInstaller->installWpScripts($domainName, $projectName, $adminEmail, $gitAccessToken, $utilBackupFolderPath);
+}
 
 // Write deploy scripts to static content dirs
 if (!empty($staticContentDirs)) {

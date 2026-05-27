@@ -5,12 +5,10 @@ declare(strict_types=1);
 namespace App\Services\Helpers;
 
 use Exception;
-use FilesystemIterator;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
 
 class FileHelper
 {
+    private static ?CommandExecutor $commandExecutor = null;
 
     /**
      * Checks if the given path exists (dir or file)
@@ -52,24 +50,17 @@ class FileHelper
     /**
      * removes a directory given the path
      * No errors will be thrown if the directory doesnt exist
+     * @throws Exception
      */
     public static function removeDir($dirPath): void
     {
-        if (file_exists($dirPath)) {
-            $it = new RecursiveDirectoryIterator($dirPath, FilesystemIterator::SKIP_DOTS);
-            $files = new RecursiveIteratorIterator(
-                $it,
-                RecursiveIteratorIterator::CHILD_FIRST
-            );
-            foreach ($files as $file) {
-                if ($file->isDir()) {
-                    rmdir($file->getPathname());
-                } else {
-                    unlink($file->getPathname());
-                }
-            }
-            rmdir($dirPath);
+        if (!file_exists($dirPath)) {
+            return;
         }
+        self::commandExecutor()->execOrFail(
+            'rm -rf ' . escapeshellarg($dirPath),
+            "Something went wrong while removing directory: $dirPath"
+        );
     }
 
     /**
@@ -108,6 +99,40 @@ YAML;
         file_put_contents("$wordpressPath/wp-cli.yml", $content);
     }
 
+    /**
+     * Moves source tree to the destination path.
+     * @throws Exception
+     */
+    public static function copyDirectory(string $source, string $destination): void
+    {
+        if (!is_dir($source)) {
+            return;
+        }
+        if (is_dir($destination)) {
+            self::removeDir($destination);
+        }
+        self::createDir($destination);
+        $source = rtrim($source, '/');
+        $destination = rtrim($destination, '/');
+        self::commandExecutor()->execOrFail(
+            'cp -a ' . escapeshellarg($source) . '/. ' . escapeshellarg($destination) . '/',
+            "Something went wrong while copying directory from $source to $destination"
+        );
+    }
+
+    /**
+     * Returns a list of files to preserve when clearing a directory.
+     */
+    public static function installPreserveFilenames(?string $utilBackupFolderPath = null): array
+    {
+        $preserve = ['.env', '.env.zilch'];
+        if ($utilBackupFolderPath !== null && $utilBackupFolderPath !== '') {
+            $preserve[] = basename($utilBackupFolderPath);
+        }
+
+        return $preserve;
+    }
+
     public static function clearDirectory($directory, $preserve = []): bool
     {
         if (!is_dir($directory)) {
@@ -135,5 +160,10 @@ YAML;
         }
 
         return true;
+    }
+
+    private static function commandExecutor(): CommandExecutor
+    {
+        return self::$commandExecutor ??= new CommandExecutor();
     }
 }
