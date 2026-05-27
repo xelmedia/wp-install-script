@@ -43,8 +43,8 @@ run_phar() {
 }
 
 yarn install --frozen-lockfile
-node_modules/.bin/wp-env stop || :
-node_modules/.bin/wp-env clean
+node_modules/.bin/wp-env stop 2>/dev/null || true
+node_modules/.bin/wp-env destroy 2>/dev/null || true
 node_modules/.bin/wp-env start --update
 
 NEW_CONTAINER_ID=$(docker ps --filter "name=tests-cli" -q)
