@@ -42,7 +42,7 @@ run_phar() {
         "$@"
 }
 
-yarn add @wordpress/scripts @wordpress/env copy-webpack-plugin
+yarn install --frozen-lockfile
 node_modules/.bin/wp-env stop || :
 node_modules/.bin/wp-env clean
 node_modules/.bin/wp-env start --update
