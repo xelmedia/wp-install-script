@@ -104,4 +104,25 @@ YAML;
         $content = file_get_contents($this->ymlFilePath);
         assertEquals($expectedContent, $content);
     }
+
+    public function testCopyDirectory_copiesTree(): void
+    {
+        $src = __DIR__ . '/copy-src';
+        $dst = __DIR__ . '/copy-dst';
+        FileHelper::removeDir($src);
+        FileHelper::removeDir($dst);
+        mkdir($src . '/sub', 0777, true);
+        file_put_contents($src . '/a.txt', 'a');
+        file_put_contents($src . '/sub/b.txt', 'b');
+
+        FileHelper::copyDirectory($src, $dst);
+
+        self::assertFileExists($dst . '/a.txt');
+        self::assertFileExists($dst . '/sub/b.txt');
+        self::assertSame('a', file_get_contents($dst . '/a.txt'));
+        self::assertSame('b', file_get_contents($dst . '/sub/b.txt'));
+
+        FileHelper::removeDir($src);
+        FileHelper::removeDir($dst);
+    }
 }

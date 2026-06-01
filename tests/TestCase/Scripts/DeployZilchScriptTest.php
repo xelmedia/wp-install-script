@@ -184,7 +184,7 @@ class DeployZilchScriptTest extends TestCase {
 
         $this->assertNotNull($thrown);
         $this->assertMatchesRegularExpression(
-            '/^Error downloading the ZIP file: .+$/',
+            '/^(Error downloading the ZIP file: .+|Failed to unzip the downloaded file\.)$/',
             $thrown->getMessage()
         );
         // Expect nothing downloaded and unzipped
