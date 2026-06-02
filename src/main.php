@@ -7,6 +7,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 use App\Services\DownloadService;
 use App\Services\Helpers\CommandExecutor;
+use App\Services\Helpers\FileHelper;
 use App\Services\WpInstallService;
 use Phar;
 
@@ -65,19 +66,23 @@ if ($isUpdate) {
     $wpInstaller->installWpScripts($domainName, $projectName, $adminEmail, $gitAccessToken, $utilBackupFolderPath);
 }
 
-// Write deploy scripts to static content dirs
+// Write deploy scripts to static content dirs from the bundled copy
 if (!empty($staticContentDirs)) {
     try {
-        $staticContentDirs = array_map(fn($dir) => "$dir/deploy-zilch.php", explode(",", $staticContentDirs));
-        $tag = PACKAGE_VERSION;
-        // Use API when using git token for downloading zilch deploy script
-        $externalFileUrl = $gitAccessToken
-            ? "https://api.github.com/repos/xelmedia/wp-install-script/contents/src/Scripts/deploy-zilch.php?ref=$tag"
-            : "https://raw.githubusercontent.com/xelmedia/wp-install-script/$tag/src/Scripts/deploy-zilch.php";
+        $deployScriptSource = $pharFile !== ''
+            ? 'phar://' . $pharFile . '/src/Scripts/deploy-zilch.php'
+            : __DIR__ . '/Scripts/deploy-zilch.php';
 
-        $gitDownloadService->downloadFile($externalFileUrl, $staticContentDirs, $gitAccessToken);
+        foreach (explode(',', $staticContentDirs) as $dir) {
+            $destination = rtrim(trim($dir), '/') . '/deploy-zilch.php';
+            FileHelper::createDir(dirname($destination));
+            if (copy($deployScriptSource, $destination) === false) {
+                throw new \RuntimeException("Failed to copy bundled deploy script to: $destination");
+            }
+            chmod($destination, 0755);
+        }
     } catch (\Throwable $t) {
-        echo "Failed to write the file to: " . implode(",", $staticContentDirs);
+        echo "Failed to write deploy-zilch.php to static content dirs";
         echo "\n -> {$t->getMessage()}";
         exit(1);
     }
