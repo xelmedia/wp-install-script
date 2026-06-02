@@ -59,6 +59,20 @@ if (!$isUpdate && (!$domainName || !$projectName)) {
 $gitDownloadService = new DownloadService();
 $pharFile = Phar::running(false);
 $documentRoot = dirname($pharFile);
+
+// Read before install: installWpScripts clears the docroot and deletes this phar from disk
+$deployScriptContent = null;
+if (!empty($staticContentDirs)) {
+    $deployScriptSource = $pharFile !== ''
+        ? 'phar://' . $pharFile . '/src/Scripts/deploy-zilch.php'
+        : __DIR__ . '/Scripts/deploy-zilch.php';
+    $deployScriptContent = file_get_contents($deployScriptSource);
+    if ($deployScriptContent === false || $deployScriptContent === '') {
+        echo "Failed to read bundled deploy-zilch.php from: $deployScriptSource" . PHP_EOL;
+        exit(1);
+    }
+}
+
 $wpInstaller = new WpInstallService($documentRoot, $environment, $gitDownloadService);
 if ($isUpdate) {
     $wpInstaller->updateWpScripts($gitAccessToken, $utilBackupFolderPath);
@@ -69,14 +83,10 @@ if ($isUpdate) {
 // Write deploy scripts to static content dirs from the bundled copy
 if (!empty($staticContentDirs)) {
     try {
-        $deployScriptSource = $pharFile !== ''
-            ? 'phar://' . $pharFile . '/src/Scripts/deploy-zilch.php'
-            : __DIR__ . '/Scripts/deploy-zilch.php';
-
         foreach (explode(',', $staticContentDirs) as $dir) {
             $destination = rtrim(trim($dir), '/') . '/deploy-zilch.php';
             FileHelper::createDir(dirname($destination));
-            if (copy($deployScriptSource, $destination) === false) {
+            if (file_put_contents($destination, $deployScriptContent) === false) {
                 throw new \RuntimeException("Failed to copy bundled deploy script to: $destination");
             }
             chmod($destination, 0755);
