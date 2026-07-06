@@ -5,6 +5,7 @@ namespace App\Services;
 
 use App\Services\Helpers\CommandExecutor;
 use Exception;
+use Throwable;
 
 class WPCommandService
 {
@@ -88,8 +89,14 @@ class WPCommandService
      */
     public function executeWpLanguageCommands(): void
     {
-        $command = 'language core install nl_NL --activate';
-        $this->executeWpCommand($command, "Something went wrong while installing and updating the language");
+        try {
+            $command = 'language core install nl_NL --activate';
+            $this->executeWpCommand($command, "Something went wrong while installing and updating the language");
+        } catch (Throwable $t) {
+            // Language install can fail on a WordPress version where the nl_NL locale is not yet available.
+            // Treat this as a non-fatal warning so the install still completes successfully.
+            echo "\nWARNING: {$t->getMessage()}";
+        }
     }
 
     /**

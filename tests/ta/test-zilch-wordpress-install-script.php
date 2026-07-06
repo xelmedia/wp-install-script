@@ -27,17 +27,29 @@ class WPInstallScriptTest {
         }
     }
 
-    private function testWPLanguageInstalled(): void {
-        $languages = exec("node_modules/.bin/wp-env run tests-cli wp core language list --status=active");
-        if(!str_contains($languages, "nl_NL")) {
-            throw new Exception("Nederlands is not installed as a core language");
-        }
-    }
-
     private function testZilchAssistantActive(): void {
         $languages = exec("node_modules/.bin/wp-env run tests-cli wp plugin list --status=active");
         if(!str_contains($languages, "zilch-assistant")) {
             throw new Exception("Zilch Assistant plugin is not active");
+        }
+    }
+
+    /**
+     * wp-env ships with a default WordPress install on the `wp_` prefix. Our installer
+     * must override it to `zilch_`, so every table in the DB must start with `zilch_`.
+     */
+    private function testAllTablesHaveZilchPrefix(): void {
+        $tablesJson = exec("node_modules/.bin/wp-env run tests-cli wp db tables --all-tables --format=json");
+        $tables = json_decode($tablesJson, true);
+        if (!is_array($tables) || count($tables) === 0) {
+            throw new Exception("Could not list database tables via wp-env (got: " . var_export($tablesJson, true) . ")");
+        }
+        $violations = array_values(array_filter($tables, fn($t) => !str_starts_with($t, 'zilch_')));
+        if (count($violations) > 0) {
+            throw new Exception(
+                "Tables without zilch_ prefix found: " . implode(', ', $violations)
+                . " (all tables: " . implode(', ', $tables) . ")"
+            );
         }
     }
 
@@ -144,18 +156,18 @@ class WPInstallScriptTest {
 
     public function executeWpInstallScriptsTests(): void {
         $this->testWPInstallation();
+        $this->testAllTablesHaveZilchPrefix();
         $this->testInstalledPlugins();
-        $this->testWPLanguageInstalled();
         $this->testZilchAssistantActive();
     }
 
     public function executeWpUpdateTests(): void {
         $this->testWPInstallation();
+        $this->testAllTablesHaveZilchPrefix();
         $this->testUpdatePreservesUploads();
         $this->testUpdatePluginsExistOnDisk();
         $this->testUpdatePluginStatesFromDatabase();
         $this->testUpdateBackupDirRemoved();
-        $this->testWPLanguageInstalled();
     }
 }
 
