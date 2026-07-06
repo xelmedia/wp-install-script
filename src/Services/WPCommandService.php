@@ -89,7 +89,11 @@ class WPCommandService
     public function executeWpLanguageCommands(): void
     {
         $command = 'language core install nl_NL --activate';
-        $this->executeWpCommand($command, "Something went wrong while installing and updating the language");
+        try {
+            $this->executeWpCommand($command, "Something went wrong while installing and updating the language");
+        } catch (\Throwable $t) {
+            echo "\nWARNING: {$t->getMessage()}";
+        }
     }
 
     /**
