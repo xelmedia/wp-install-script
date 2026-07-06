@@ -70,6 +70,7 @@ echo "WP_HOME='${wp_home}'" >> .env
 echo 'WP_SITEURL="${WP_HOME}/wp"' >> .env
 echo 'WP_ENV="test"' >> .env
 
+node_modules/.bin/wp-env run tests-cli wp db reset --yes
 node_modules/.bin/wp-env run tests-cli /var/www/html/cleanup.sh
 
 zilchEnvContent=$(<./.env.zilch)
