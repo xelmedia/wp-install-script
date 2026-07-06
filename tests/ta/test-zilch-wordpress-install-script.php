@@ -145,7 +145,7 @@ class WPInstallScriptTest {
     public function executeWpInstallScriptsTests(): void {
         $this->testWPInstallation();
         $this->testInstalledPlugins();
-     //   $this->testWPLanguageInstalled();
+        $this->testWPLanguageInstalled();
         $this->testZilchAssistantActive();
     }
 
@@ -155,7 +155,7 @@ class WPInstallScriptTest {
         $this->testUpdatePluginsExistOnDisk();
         $this->testUpdatePluginStatesFromDatabase();
         $this->testUpdateBackupDirRemoved();
-    //    $this->testWPLanguageInstalled();
+        $this->testWPLanguageInstalled();
     }
 }
 
