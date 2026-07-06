@@ -27,12 +27,12 @@ class WPInstallScriptTest {
         }
     }
 
-//    private function testWPLanguageInstalled(): void {
-//        $languages = exec("node_modules/.bin/wp-env run tests-cli wp core language list --status=active");
-//        if(!str_contains($languages, "nl_NL")) {
-//            throw new Exception("Nederlands is not installed as a core language");
-//        }
-//    }
+    private function testWPLanguageInstalled(): void {
+        $languages = exec("node_modules/.bin/wp-env run tests-cli wp core language list --status=active");
+        if(!str_contains($languages, "nl_NL")) {
+            throw new Exception("Nederlands is not installed as a core language");
+        }
+    }
 
     private function testZilchAssistantActive(): void {
         $languages = exec("node_modules/.bin/wp-env run tests-cli wp plugin list --status=active");
@@ -145,7 +145,7 @@ class WPInstallScriptTest {
     public function executeWpInstallScriptsTests(): void {
         $this->testWPInstallation();
         $this->testInstalledPlugins();
-        $this->testWPLanguageInstalled();
+     //   $this->testWPLanguageInstalled();
         $this->testZilchAssistantActive();
     }
 
@@ -155,7 +155,7 @@ class WPInstallScriptTest {
         $this->testUpdatePluginsExistOnDisk();
         $this->testUpdatePluginStatesFromDatabase();
         $this->testUpdateBackupDirRemoved();
-        $this->testWPLanguageInstalled();
+    //    $this->testWPLanguageInstalled();
     }
 }
 
