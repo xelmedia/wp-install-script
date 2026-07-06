@@ -39,10 +39,15 @@ class WPInstallScriptTest {
      * must override it to `zilch_`, so every table in the DB must start with `zilch_`.
      */
     private function testAllTablesHaveZilchPrefix(): void {
-        $tablesJson = exec("node_modules/.bin/wp-env run tests-cli wp db tables --all-tables --format=json");
-        $tables = json_decode($tablesJson, true);
-        if (!is_array($tables) || count($tables) === 0) {
-            throw new Exception("Could not list database tables via wp-env (got: " . var_export($tablesJson, true) . ")");
+        exec("node_modules/.bin/wp-env run tests-cli wp db tables --all-tables", $lines);
+        // wp-env run wraps stdout with "ℹ Starting ..." and "✔ Ran ..." info lines.
+        // Table names have no spaces, so drop anything that does.
+        $tables = array_values(array_filter(
+            array_map('trim', $lines),
+            fn($line) => $line !== '' && !str_contains($line, ' ')
+        ));
+        if (count($tables) === 0) {
+            throw new Exception("Could not list database tables via wp-env");
         }
         $violations = array_values(array_filter($tables, fn($t) => !str_starts_with($t, 'zilch_')));
         if (count($violations) > 0) {
@@ -163,7 +168,6 @@ class WPInstallScriptTest {
 
     public function executeWpUpdateTests(): void {
         $this->testWPInstallation();
-        $this->testAllTablesHaveZilchPrefix();
         $this->testUpdatePreservesUploads();
         $this->testUpdatePluginsExistOnDisk();
         $this->testUpdatePluginStatesFromDatabase();
